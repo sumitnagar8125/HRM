@@ -11,7 +11,7 @@ function ActivityCard({ workedHours = 2.83 }) {
       <h2 className="text-lg font-semibold text-gray-700 mb-4">Activity</h2>
 
       {/* Circular Progress */}
-      <div className="relative w-40 h-40 flex items-center justify-center">
+      <div className="relative w-40 h-57 flex items-center justify-center">
         {/* Outer Circle */}
         <svg className="w-40 h-40 transform -rotate-90">
           <circle

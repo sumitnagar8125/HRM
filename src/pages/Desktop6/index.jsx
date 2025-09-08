@@ -6,16 +6,15 @@ import DashboardLayout from "./DashboardLayout";
 
 export default function IndexPage() {
   return (
-    <div className="flex w-full min-h-screen">
+    <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <Sidebar />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex flex-col flex-1">
         {/* Header */}
         <Header />
 
-        {/* Dashboard Content */}
+        {/* Dashboard */}
         <DashboardLayout />
       </div>
     </div>
