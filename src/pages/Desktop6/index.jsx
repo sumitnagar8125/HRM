@@ -1,4 +1,4 @@
-import Sidebar from "./Sidebar";
+import Sidebar from "../../components/ui/Sidebar";
 
 export default function Desktop6() {
   return (
