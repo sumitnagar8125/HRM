@@ -1,7 +1,6 @@
-import Desktop4 from "./pages/Desktop4"
-
+import Desktop6 from "./pages/Desktop6"
 function App() {
-  return <Desktop4 />
+  return <Desktop6 />
 }
 
 export default App
