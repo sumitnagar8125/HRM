@@ -16,5 +16,5 @@ export default function Header() {
       <h1 className="text-blue-700 font-semibold">Dashboard</h1>
       <span className="text-sm text-gray-700">{formattedDate}</span>
     </header>
-  );
+ );
 }
