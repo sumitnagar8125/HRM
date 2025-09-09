@@ -4,7 +4,9 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { 
-  Home, Inbox, Clock, User, Building2, Calendar, HelpCircle, LogOut 
+  Home, Inbox, Clock, User, Building2, Calendar, HelpCircle, LogOut, 
+  HeadphonesIcon,
+  PlaneIcon
 } from "lucide-react";
 
 const menuItems = [
@@ -13,8 +15,8 @@ const menuItems = [
   { name: "Attendance", icon: Clock, path: "/attendance" },
   { name: "Profile", icon: User, path: "/profile" },
   { name: "Departments", icon: Building2, path: "/departments" },
-  { name: "Calendar", icon: Calendar, path: "/calendar" },
-  { name: "Help", icon: HelpCircle, path: "/help" },
+  { name: "Leave", icon: PlaneIcon, path: "/leave" },
+  { name: "Support", icon: HeadphonesIcon, path: "/support" },
 ];
 
 export default function Sidebar() {

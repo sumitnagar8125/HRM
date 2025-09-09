@@ -1,6 +1,6 @@
 "use client";
-import Desktop7 from "@/src/pages/Desktop7";
+import Desktop4 from "@/src/pages/Desktop4";
 
 export default function LandingPage() {
-  return <Desktop7 />;
+  return <Desktop4 />;
 }
