@@ -2,6 +2,7 @@
 import React from "react";
 import Sidebar from "../../components/ui/Sidebar";
 import Header from "./Header";
+import DashboardLayout from "./DashboardLayout";
 
 export default function IndexPage() {
   return (
@@ -14,7 +15,7 @@ export default function IndexPage() {
         <Header />
 
         {/* Dashboard */}
-       { /* <DashboardLayout /> */ }
+       <DashboardLayout />
       </div>
     </div>
   );
