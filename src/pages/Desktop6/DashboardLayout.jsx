@@ -7,13 +7,13 @@ import StatsCard from "./StatsCard";
 import { Clock, Coffee, BarChart3 } from "lucide-react";
 
 const weeklyData = [
-  { day: "M", workedHours: 10, breaks: 1, overtime: 2 },
+  { day: "M", workedHours: 10, breaks: 1, overtime: 6 },
   { day: "T", workedHours: 14, breaks: 2, overtime: 1 },
-  { day: "W", workedHours: 9, breaks: 1.5, overtime: 0 },
+  { day: "W", workedHours: 9, breaks: 1.5, overtime: 1 },
   { day: "T", workedHours: 11, breaks: 1, overtime: 0.5 },
-  { day: "F", workedHours: 7, breaks: 0.5, overtime: 0 },
-  { day: "S", workedHours: 7, breaks: 0.5, overtime: 0 },
-  { day: "S", workedHours: 0, breaks: 0, overtime: 0 },
+  { day: "F", workedHours: 8, breaks: 0.5, overtime: 0 },
+  { day: "S", workedHours: 9, breaks: 0.5, overtime: 0 },
+  { day: "S", workedHours: 10, breaks: 0, overtime: 0 },
 ];
 
 export default function DashboardLayout() {
