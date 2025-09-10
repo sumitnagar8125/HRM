@@ -14,16 +14,64 @@ export default function DashboardLayout() {
   // Example timesheet data
   const timesheetData = {
     "2025-09-09": [
-      { label: "Clock In", time: "9:10 AM", type: "in" },
-      { label: "Break Start", time: "11:30 AM", type: "breakStart" },
-      { label: "Break End", time: "11:45 AM", type: "breakEnd" },
-      { label: "Clock Out", time: "6:45 PM", type: "out" },
+      {
+        label: "Clock In",
+        labelSub: "Work Started",
+        time: "9:10 AM",
+        timeSub: "WFH",
+        type: "in",
+      },
+      {
+        label: "Break Start",
+        labelSub: "Tea Break",
+        time: "11:30 AM",
+        timeSub: "Duration: 15m",
+        type: "breakStart",
+      },
+      {
+        label: "Break End",
+        labelSub: "Resumed Work",
+        time: "11:45 AM",
+        timeSub: "WFH",
+        type: "breakEnd",
+      },
+      {
+        label: "Clock Out",
+        labelSub: "Work Ended",
+        time: "6:45 PM",
+        timeSub: "WFH",
+        type: "out",
+      },
     ],
     "2025-09-10": [
-      { label: "Clock In", time: "9:00 AM", type: "in" },
-      { label: "Break Start", time: "1:00 PM", type: "breakStart" },
-      { label: "Break End", time: "1:30 PM", type: "breakEnd" },
-      { label: "Clock Out", time: "7:00 PM", type: "out" },
+      {
+        label: "Clock In",
+        labelSub: "Work Started",
+        time: "9:00 AM",
+        timeSub: "Office",
+        type: "in",
+      },
+      {
+        label: "Break Start",
+        labelSub: "Lunch Break",
+        time: "1:00 PM",
+        timeSub: "Duration: 30m",
+        type: "breakStart",
+      },
+      {
+        label: "Break End",
+        labelSub: "Resumed Work",
+        time: "1:30 PM",
+        timeSub: "Office",
+        type: "breakEnd",
+      },
+      {
+        label: "Clock Out",
+        labelSub: "Work Ended",
+        time: "7:00 PM",
+        timeSub: "Office",
+        type: "out",
+      },
     ],
   };
 
@@ -81,26 +129,27 @@ export default function DashboardLayout() {
   ];
 
   return (
-    <div className="flex-1 flex flex-col">
-      <Header />
+  <div className="flex flex-col h-full">
+    <Header />
 
-      <main className="p-4 space-y-6">
-        {/* Calendar */}
-        <section className="bg-white shadow rounded-xl p-4">
-          <Calenderui
-            selectedDate={selectedDate}
-            setSelectedDate={setSelectedDate}
-          />
-        </section>
+    {/* main area scrolls independently */}
+    <main className="flex-1 overflow-y-auto p-4 space-y-6">
+      {/* Calendar */}
+      <section className="bg-white shadow rounded-xl p-4">
+        <Calenderui
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
+        />
+      </section>
 
-        {/* Daily Timesheet - now above cards */}
-        <section className="bg-white shadow rounded-xl p-4">
-          <Timesheet logs={logs} />
-        </section>
+      {/* Daily Timesheet */}
+      <section className="bg-white shadow rounded-xl p-4">
+        <Timesheet logs={logs} />
+      </section>
 
-        {/* Summary Cards */}
-        <TimeCards data={cardsData} />
-      </main>
-    </div>
-  );
+      {/* Summary Cards */}
+      <TimeCards data={cardsData} />
+    </main>
+  </div>
+);
 }

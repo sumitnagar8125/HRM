@@ -5,12 +5,16 @@ import DashboardLayout from "./DashboardLayout";
 
 export default function IndexPage() {
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar (left side) */}
-      <Sidebar />
+    <div className="flex h-screen bg-gray-50">
+      {/* Sidebar (fixed height, scrollable if needed) */}
+      <div className="h-full">
+        <Sidebar />
+      </div>
 
-      {/* DashboardLayout handles Header + Calendar + Other content */}
-      <DashboardLayout />
+      {/* DashboardLayout (fills remaining space, scrolls internally) */}
+      <div className="flex-1 h-full overflow-y-auto">
+        <DashboardLayout />
+      </div>
     </div>
   );
 }
