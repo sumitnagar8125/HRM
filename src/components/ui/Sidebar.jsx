@@ -12,7 +12,7 @@ import {
 const menuItems = [
   { name: "Home", icon: Home, path: "/home" },
   { name: "Inbox", icon: Inbox, path: "/inbox" },
-  { name: "Attendance", icon: Clock, path: "/attendance" },
+  { name: "Timesheet",icon:Calendar, path: "/timesheet" },
   { name: "Profile", icon: User, path: "/profile" },
   { name: "Departments", icon: Building2, path: "/departments" },
   { name: "Leave", icon: PlaneIcon, path: "/leave" },

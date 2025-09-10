@@ -8,25 +8,19 @@ import {
   isSameDay,
 } from "date-fns";
 
-export default function Calenderui() {
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [weekStart, setWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 0 }));
+export default function Calenderui({ selectedDate, setSelectedDate }) {
+  const [weekStart, setWeekStart] = useState(
+    startOfWeek(new Date(), { weekStartsOn: 0 })
+  );
 
-  // Generate current week days
   const days = [...Array(7)].map((_, i) => addDays(weekStart, i));
 
-  // Go to previous week
-  const prevWeek = () => setWeekStart(subWeeks(weekStart, 1));
-
-  // Go to next week
-  const nextWeek = () => setWeekStart(addWeeks(weekStart, 1));
-
   return (
-    <div className="bg-white shadow rounded-xl p-6">
+    <div>
       {/* Top Section with arrows and date */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-4">
         <button
-          onClick={prevWeek}
+          onClick={() => setWeekStart(subWeeks(weekStart, 1))}
           className="text-gray-600 hover:text-blue-600 text-xl font-bold"
         >
           &lt;
@@ -40,7 +34,7 @@ export default function Calenderui() {
           </p>
         </div>
         <button
-          onClick={nextWeek}
+          onClick={() => setWeekStart(addWeeks(weekStart, 1))}
           className="text-gray-600 hover:text-blue-600 text-xl font-bold"
         >
           &gt;
@@ -48,7 +42,7 @@ export default function Calenderui() {
       </div>
 
       {/* Days Row */}
-      <div className="flex justify-center gap-15">
+      <div className="flex justify-center gap-6">
         {days.map((day, idx) => {
           const isActive = isSameDay(day, selectedDate);
           return (
