@@ -1,7 +1,6 @@
 "use client";
 import React from "react";
 import Sidebar from "../../components/ui/Sidebar";
-import Header from "./Header";
 import DashboardLayout from "./DashboardLayout";
 
 export default function IndexPage() {
@@ -10,13 +9,8 @@ export default function IndexPage() {
       {/* Sidebar */}
       <Sidebar />
 
-      <div className="flex flex-col flex-1">
-        {/* Header */}
-        <Header />
-
-        {/* Dashboard */}
-       <DashboardLayout />
-      </div>
+      {/* Right side (Header + Dashboard are now inside DashboardLayout) */}
+      <DashboardLayout />
     </div>
   );
 }

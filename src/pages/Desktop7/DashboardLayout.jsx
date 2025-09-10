@@ -1,15 +1,21 @@
 "use client";
 import React from "react";
-import Leaves from "./Leaves"; 
+import Header from "./Header";
+import Leaves from "./Leaves";
 import History from "./History";
 import { Umbrella, Stethoscope, UserRound } from "lucide-react";
 
-export default function DashboardLayout({ children }) {
+export default function DashboardLayout() {
   return (
-    <div className="flex-1 flex flex-col bg-gray-50 min-h-screen">
-      <main className="p-6">
+    <div className="flex flex-col flex-1 bg-gray-50 h-screen">
+      {/* Header */}
+      <Header />
+
+      {/* Dashboard Content */}
+      <main className="flex-1 p-6 flex flex-col space-y-6 overflow-hidden">
+        
         {/* Leave Cards Row */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Leaves
             title="Vacation"
             available={23}
@@ -32,12 +38,11 @@ export default function DashboardLayout({ children }) {
             icon={<UserRound size={20} className="text-purple-500" />}
           />
         </div>
-        <div  >
-            <History />
-        </div>
 
-        {/* Render Children (like History etc.) */}
-        {children}
+        {/* Leave History grows + scrolls */}
+        <div className="flex-1 overflow-hidden">
+          <History />
+        </div>
       </main>
     </div>
   );

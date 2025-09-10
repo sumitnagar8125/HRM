@@ -1,7 +1,6 @@
 "use client";
-
 import React, { useState } from "react";
-import { CalendarDays, Umbrella, User, Activity } from "lucide-react"; // icons
+import { CalendarDays, Umbrella, User, Activity } from "lucide-react";
 
 export default function History() {
   const [leaves] = useState([
@@ -14,7 +13,6 @@ export default function History() {
     { id: 7, type: "Vacation", title: "Summer Vacation", startDate: "2024-07-15", endDate: "2024-07-22", days: 8, status: "Approved" },
   ]);
 
-  // Pick icon based on leave type
   const getIcon = (type) => {
     switch (type) {
       case "Vacation": return <Umbrella className="text-sky-600" size={20} />;
@@ -24,7 +22,6 @@ export default function History() {
     }
   };
 
-  // Badge colors based on status
   const getStatusBadge = (status) => {
     switch (status) {
       case "Approved": return "bg-green-100 text-green-600";
@@ -35,40 +32,36 @@ export default function History() {
   };
 
   return (
-    <section className="mt-4 bg-white border rounded-md shadow-sm p-4 flex flex-col h-full">
-  <h2 className="text-lg font-semibold mb-3">Leave History</h2>
+    <section className="bg-white rounded-2xl shadow p-4 flex flex-col h-full">
+      <h2 className="text-lg font-semibold mb-3">Leave History</h2>
 
-  {/* ✅ Scrollable list, takes full height but shows 5 items before scroll */}
-  <div className="flex-1 overflow-y-auto pr-2 space-y-3 max-h-[400px]">
-    {leaves.map((leave) => (
-      <div
-        key={leave.id}
-        className="flex items-center justify-between border-b last:border-b-0 pb-2"
-      >
-        {/* left side: icon + details */}
-        <div className="flex items-start gap-3">
-          <div className="p-2 bg-gray-50 rounded-md">{getIcon(leave.type)}</div>
-          <div>
-            <p className="font-medium capitalize">{leave.title}</p>
-            <p className="text-sm text-gray-500">
-              {leave.startDate} - {leave.endDate} • {leave.days} days
-            </p>
-            <p className="text-xs text-gray-400">{leave.type} Leave</p>
+      {/* ✅ Take all space and scroll inside */}
+      <div className="flex-1 overflow-y-auto pr-2 space-y-3">
+        {leaves.map((leave) => (
+          <div
+            key={leave.id}
+            className="flex items-center justify-between border-b last:border-b-0 pb-2"
+          >
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-gray-50 rounded-md">{getIcon(leave.type)}</div>
+              <div>
+                <p className="font-medium capitalize">{leave.title}</p>
+                <p className="text-sm text-gray-500">
+                  {leave.startDate} - {leave.endDate} • {leave.days} days
+                </p>
+                <p className="text-xs text-gray-400">{leave.type} Leave</p>
+              </div>
+            </div>
+            <span
+              className={`px-3 py-1 text-sm rounded-full font-medium ${getStatusBadge(
+                leave.status
+              )}`}
+            >
+              {leave.status}
+            </span>
           </div>
-        </div>
-
-        {/* right side: status */}
-        <span
-          className={`px-3 py-1 text-sm rounded-full font-medium ${getStatusBadge(
-            leave.status
-          )}`}
-        >
-          {leave.status}
-        </span>
+        ))}
       </div>
-    ))}
-  </div>
-</section>
-
+    </section>
   );
 }
