@@ -32,7 +32,7 @@ export default function DashboardLayout({ children }) {
             icon={<UserRound size={20} className="text-purple-500" />}
           />
         </div>
-        <div >
+        <div  >
             <History />
         </div>
 

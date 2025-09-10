@@ -39,7 +39,7 @@ export default function History() {
       <h2 className="text-lg font-semibold mb-3">Leave History</h2>
 
       {/* ✅ Only this list scrolls, shows 5 items before scrolling */}
-      <div className="h-123 overflow-y-scroll pr-2 space-y-3">
+      <div className="h-85 overflow-y-scroll pr-2 space-y-3">
         {leaves.map((leave) => (
           <div
             key={leave.id}
