@@ -1,27 +1,18 @@
 "use client";
-import React from "react";
-
-export default function StatsCard({
-  title,
-  value,
-  icon,
-  iconBg = "bg-blue-100",
-  iconColor = "text-blue-500",
-}) {
+export default function TimeCards({ data }) {
   return (
-    <div className="flex items-center justify-between px-5 py-4 bg-white rounded-2xl shadow-md border w-full">
-      {/* Text Section */}
-      <div className="flex flex-col">
-        <p className="text-gray-500 text-sm">{title}</p>
-        <h2 className="text-xl font-bold text-gray-800">{value}</h2>
-      </div>
-
-      {/* Icon Section */}
-      <div
-        className={`w-10 h-10 flex items-center justify-center rounded-lg ${iconBg}`}
-      >
-        <span className={`text-lg ${iconColor}`}>{icon}</span>
-      </div>
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {data.map((card, idx) => (
+        <div
+          key={idx}
+          className="bg-white shadow rounded-xl p-4 flex flex-col items-start"
+        >
+          <div className={`mb-2 ${card.color}`}>{card.icon}</div>
+          <h3 className="text-lg font-semibold">{card.title}</h3>
+          <p className="text-xl font-bold">{card.value}</p>
+          <p className="text-sm text-gray-500">{card.subtitle}</p>
+        </div>
+      ))}
     </div>
   );
 }
