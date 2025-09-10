@@ -35,39 +35,40 @@ export default function History() {
   };
 
   return (
-    <section className="mt-4 bg-white border rounded-md shadow-sm p-4">
-      <h2 className="text-lg font-semibold mb-3">Leave History</h2>
+    <section className="mt-4 bg-white border rounded-md shadow-sm p-4 flex flex-col h-full">
+  <h2 className="text-lg font-semibold mb-3">Leave History</h2>
 
-      {/* ✅ Only this list scrolls, shows 5 items before scrolling */}
-      <div className="h-85 overflow-y-scroll pr-2 space-y-3">
-        {leaves.map((leave) => (
-          <div
-            key={leave.id}
-            className="flex items-center justify-between border-b last:border-b-0 pb-2"
-          >
-            {/* left side: icon + details */}
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-gray-50 rounded-md">{getIcon(leave.type)}</div>
-              <div>
-                <p className="font-medium capitalize">{leave.title}</p>
-                <p className="text-sm text-gray-500">
-                  {leave.startDate} - {leave.endDate} • {leave.days} days
-                </p>
-                <p className="text-xs text-gray-400">{leave.type} Leave</p>
-              </div>
-            </div>
-
-            {/* right side: status */}
-            <span
-              className={`px-3 py-1 text-sm rounded-full font-medium ${getStatusBadge(
-                leave.status
-              )}`}
-            >
-              {leave.status}
-            </span>
+  {/* ✅ Scrollable list, takes full height but shows 5 items before scroll */}
+  <div className="flex-1 overflow-y-auto pr-2 space-y-3 max-h-[400px]">
+    {leaves.map((leave) => (
+      <div
+        key={leave.id}
+        className="flex items-center justify-between border-b last:border-b-0 pb-2"
+      >
+        {/* left side: icon + details */}
+        <div className="flex items-start gap-3">
+          <div className="p-2 bg-gray-50 rounded-md">{getIcon(leave.type)}</div>
+          <div>
+            <p className="font-medium capitalize">{leave.title}</p>
+            <p className="text-sm text-gray-500">
+              {leave.startDate} - {leave.endDate} • {leave.days} days
+            </p>
+            <p className="text-xs text-gray-400">{leave.type} Leave</p>
           </div>
-        ))}
+        </div>
+
+        {/* right side: status */}
+        <span
+          className={`px-3 py-1 text-sm rounded-full font-medium ${getStatusBadge(
+            leave.status
+          )}`}
+        >
+          {leave.status}
+        </span>
       </div>
-    </section>
+    ))}
+  </div>
+</section>
+
   );
 }
