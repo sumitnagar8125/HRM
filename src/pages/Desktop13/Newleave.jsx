@@ -7,9 +7,6 @@ export default function Newleave() {
   return (
     <div className="p-6 w-full">
       <div className="bg-white rounded-xl shadow-md p-6 border">
-       
-       
-
         {/* Form */}
         <form className="space-y-5">
           {/* Policy */}
@@ -20,9 +17,9 @@ export default function Newleave() {
             </label>
             <select className="mt-2 w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 outline-none">
               <option value="">Select a Policy</option>
-              <option value="Vacation">Sick Leave</option>
-              <option value="Medical">Casual Leave</option>
-              <option value="Personal">Earned Leave</option>
+              <option value="Sick">Sick Leave</option>
+              <option value="Casual">Casual Leave</option>
+              <option value="Earned">Earned Leave</option>
             </select>
           </div>
 
@@ -68,7 +65,7 @@ export default function Newleave() {
               Add a reason or note
             </label>
             <textarea
-              placeholder="write your reason here..."
+              placeholder="Write your reason here..."
               rows={3}
               className="mt-2 w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 outline-none resize-none"
             />
@@ -76,14 +73,31 @@ export default function Newleave() {
 
           {/* Upload File */}
           <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+            <label
+              htmlFor="fileUpload"
+              className="flex items-center gap-2 text-sm font-medium text-gray-700"
+            >
               <Image size={18} />
               Photo
             </label>
-            <div className="mt-2 border-dashed border-2 border-gray-300 rounded-lg p-6 text-center text-gray-500 cursor-pointer hover:border-purple-400">
+
+            {/* Upload Zone */}
+            <label
+              htmlFor="fileUpload"
+              className="mt-2 block border-dashed border-2 border-gray-300 rounded-lg p-6 text-center text-gray-500 cursor-pointer hover:border-purple-400"
+            >
               <p className="text-sm">Tap to upload file</p>
-              <input type="file" className="hidden" />
-            </div>
+              <input
+                id="fileUpload"
+                type="file"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    alert(`Selected: ${e.target.files[0].name}`);
+                  }
+                }}
+              />
+            </label>
           </div>
 
           {/* Submit */}
