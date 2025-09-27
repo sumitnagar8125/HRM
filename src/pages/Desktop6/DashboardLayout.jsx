@@ -12,7 +12,6 @@ export default function DashboardLayout() {
   const [weeklyData, setWeeklyData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Load token & employeeId after mount
   useEffect(() => {
     if (typeof window !== "undefined") {
       setToken(localStorage.getItem("token"));
@@ -21,85 +20,77 @@ export default function DashboardLayout() {
   }, []);
 
   const fetchAttendance = async () => {
-  if (!token || !employeeId) return;
+    if (!token || !employeeId) return;
 
-  setLoading(true);
+    setLoading(true);
 
-  try {
-    const res = await fetch(
-      `http://127.0.0.1:8000/attendance/?employee_id=${employeeId}&limit=31`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
+    try {
+      const res = await fetch(
+        `http://127.0.0.1:8000/attendance/?employee_id=${employeeId}&limit=31`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
-    if (!res.ok) throw new Error("Failed to fetch attendance");
+      if (!res.ok) throw new Error("Failed to fetch attendance");
 
-    const data = await res.json();
+      const data = await res.json();
 
-    console.log("Raw attendance data:", data);
+      const employeeRecords = data.filter(
+        (record) =>
+          record.employee_id === employeeId &&
+          record.login_time !== "1970-01-01 00:00:00.000"
+      );
 
-    const employeeRecords = data.filter(
-      (record) => record.employee_id === employeeId
-    );
+      const today = new Date();
+      const firstDay = new Date(today);
+      firstDay.setHours(0, 0, 0, 0);
+      firstDay.setDate(today.getDate() - today.getDay());
+      const lastDay = new Date(firstDay);
+      lastDay.setDate(firstDay.getDate() + 6);
+      lastDay.setHours(23, 59, 59, 999);
 
-    // Calculate start and end of current week (Sunday to Saturday)
-    const today = new Date();
-    const firstDay = new Date(today);
-    firstDay.setHours(0, 0, 0, 0);
-    firstDay.setDate(today.getDate() - today.getDay());
-    const lastDay = new Date(firstDay);
-    lastDay.setDate(firstDay.getDate() + 6);
-    lastDay.setHours(23, 59, 59, 999);
+      const currentWeekRecords = employeeRecords.filter((record) => {
+        const loginDate = new Date(record.login_time);
+        return loginDate >= firstDay && loginDate <= lastDay;
+      });
 
-    // Filter records for current week only
-    const currentWeekRecords = employeeRecords.filter((record) => {
-      const loginDate = new Date(record.login_time);
-      return loginDate >= firstDay && loginDate <= lastDay;
-    });
+      const daysLabel = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      const weekly = Array.from({ length: 7 }, (_, i) => ({
+        day: daysLabel[i],
+        workedHours: 0,
+        breaks: 0,
+        overtime: 0,
+      }));
 
-    const daysLabel = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    const weekly = Array.from({ length: 7 }, (_, i) => ({
-      day: daysLabel[i],
-      workedHours: 0,
-      breaks: 0,
-      overtime: 0,
-    }));
+      currentWeekRecords.forEach((record) => {
+        if (!record.login_time || !record.logout_time) return;
 
-    currentWeekRecords.forEach((record) => {
-      if (!record.login_time || !record.logout_time) return;
+        const loginDateUTC = new Date(record.login_time);
+        const logoutDateUTC = new Date(record.logout_time);
 
-      // Convert login/logout time to IST (+5.5 hours)
-      const loginDateUTC = new Date(record.login_time);
-      const logoutDateUTC = new Date(record.logout_time);
+        const loginDateIST = new Date(loginDateUTC.getTime() + 19800000);
+        const logoutDateIST = new Date(logoutDateUTC.getTime() + 19800000);
 
-      const loginDateIST = new Date(loginDateUTC.getTime() + 19800000);
-      const logoutDateIST = new Date(logoutDateUTC.getTime() + 19800000);
+        if (isNaN(loginDateIST) || isNaN(logoutDateIST)) return;
 
-      if (isNaN(loginDateIST) || isNaN(logoutDateIST)) return;
+        const worked = (logoutDateIST - loginDateIST) / 3600000;
+        if (worked <= 0 || worked > 24) return;
 
-      const worked = (logoutDateIST - loginDateIST) / 3600000;
-      if (worked <= 0 || worked > 24) return;
+        const idx = loginDateIST.getDay();
 
-      const idx = loginDateIST.getDay();
+        weekly[idx].workedHours += worked;
+        if (record.on_leave) weekly[idx].breaks += worked;
+        if (worked > 8) weekly[idx].overtime += worked - 8;
+      });
 
-      weekly[idx].workedHours += worked;
-      if (record.on_leave) weekly[idx].breaks += worked;
-      console.log(worked);
-      console.log(record.on_leave);
-      if (worked > 8) weekly[idx].overtime += worked - 8;
-    });
-
-    console.log("Processed weekly data (current week):", weekly);
-
-    setWeeklyData(weekly);
-    setLoading(false);
-  } catch (err) {
-    console.error("Error fetching attendance:", err);
-    setLoading(false);
-  }
-};
-
+      setWeeklyData(weekly);
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching attendance:", err);
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchAttendance();
@@ -143,7 +134,9 @@ export default function DashboardLayout() {
         {hasData ? (
           <BarChart data={weeklyData} />
         ) : (
-          <div className="text-center text-gray-500 mt-10">No attendance data available for this week.</div>
+          <div className="text-center text-gray-500 mt-10">
+            No attendance data available for this week.
+          </div>
         )}
       </div>
       <div className="col-span-12 lg:col-span-4">

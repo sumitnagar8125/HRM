@@ -6,51 +6,76 @@ import {
   addWeeks,
   subWeeks,
   isSameDay,
+  differenceInCalendarDays,
+  isBefore,
+  isAfter,
+  startOfDay,
 } from "date-fns";
 
 export default function Calenderui({ selectedDate, setSelectedDate }) {
-  const [weekStart, setWeekStart] = useState(
-    startOfWeek(new Date(), { weekStartsOn: 0 })
-  );
+  const today = startOfDay(new Date());
+
+  // Start of currently displayed week
+  const [weekStart, setWeekStart] = useState(startOfWeek(today, { weekStartsOn: 0 }));
+
+  // Limits week navigation to max 2 weeks ago
+  const canGoBack = differenceInCalendarDays(weekStart, subWeeks(today, 2)) > 0;
+  const canGoForward = differenceInCalendarDays(startOfWeek(addWeeks(weekStart, 1)), today) <= 0;
 
   const days = [...Array(7)].map((_, i) => addDays(weekStart, i));
 
+  // Disable dates older than 14 days from today
+  const isDisabled = (day) => isBefore(day, subWeeks(today, 2)) || isAfter(day, today);
+
+  const onDateClick = (day) => {
+    if (!isDisabled(day)) {
+      setSelectedDate(day);
+    }
+  };
+
   return (
     <div>
-      {/* Top Section with arrows and date */}
       <div className="flex justify-between items-center mb-4">
         <button
-          onClick={() => setWeekStart(subWeeks(weekStart, 1))}
-          className="text-gray-600 hover:text-blue-600 text-xl font-bold"
+          onClick={() => canGoBack && setWeekStart(subWeeks(weekStart, 1))}
+          className={`text-xl font-bold ${
+            canGoBack ? "text-gray-600 hover:text-blue-600" : "text-gray-300 cursor-not-allowed"
+          }`}
+          disabled={!canGoBack}
         >
           &lt;
         </button>
+
         <div className="text-center">
-          <h2 className="font-semibold text-lg">
-            {format(selectedDate, "EEEE, MMMM d, yyyy")}
-          </h2>
+          <h2 className="font-semibold text-lg">{format(selectedDate, "EEEE, MMMM d, yyyy")}</h2>
           <p className="text-gray-500 text-sm">
             Week {format(weekStart, "I")} of {format(weekStart, "yyyy")}
           </p>
         </div>
+
         <button
-          onClick={() => setWeekStart(addWeeks(weekStart, 1))}
-          className="text-gray-600 hover:text-blue-600 text-xl font-bold"
+          onClick={() => canGoForward && setWeekStart(addWeeks(weekStart, 1))}
+          className={`text-xl font-bold ${
+            canGoForward ? "text-gray-600 hover:text-blue-600" : "text-gray-300 cursor-not-allowed"
+          }`}
+          disabled={!canGoForward}
         >
           &gt;
         </button>
       </div>
 
-      {/* Days Row */}
       <div className="flex justify-center gap-6">
         {days.map((day, idx) => {
           const isActive = isSameDay(day, selectedDate);
+          const disabled = isDisabled(day);
           return (
             <div
               key={idx}
-              onClick={() => setSelectedDate(day)}
+              onClick={() => onDateClick(day)}
               className={`flex flex-col items-center px-3 py-2 rounded-lg cursor-pointer transition ${
-                isActive
+                disabled
+                  ? "text-gray-300 cursor-not-allowed"
+                  : isActive
                   ? "bg-blue-600 text-white font-semibold"
                   : "text-gray-600 hover:bg-gray-100"
               }`}

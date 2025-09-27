@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Button from "../../components/ui/Button";
 
 function TimerCard({ onClockAction }) {
@@ -11,50 +11,95 @@ function TimerCard({ onClockAction }) {
   const [breakStartTime, setBreakStartTime] = useState(null);
   const [totalBreakSeconds, setTotalBreakSeconds] = useState(0);
 
-  const employeeId = localStorage.getItem("employee_id");
+  const timerRef = useRef(null);
+  const lastUpdateTimeRef = useRef(null);
+  const accumulatedSecondsRef = useRef(0);
   const token = localStorage.getItem("token");
 
-  useEffect(() => {
-    const savedClockIn = localStorage.getItem("clockInTime");
-    const savedBreakSeconds = parseInt(localStorage.getItem("totalBreakSeconds") || "0", 10);
-    if (savedClockIn) {
-      setClockInTime(savedClockIn);
-      setIsRunning(true);
-      setTotalBreakSeconds(savedBreakSeconds);
-      const elapsed = Math.floor((new Date() - new Date(savedClockIn)) / 1000) - savedBreakSeconds;
-      setTime(elapsed > 0 ? elapsed : 0);
+  const startTimer = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    lastUpdateTimeRef.current = Date.now();
+    timerRef.current = setInterval(() => {
+      const now = Date.now();
+      const delta = Math.floor((now - lastUpdateTimeRef.current) / 1000);
+      if (delta > 0) {
+        accumulatedSecondsRef.current += delta;
+        setTime(accumulatedSecondsRef.current);
+        lastUpdateTimeRef.current = now;
+      }
+    }, 1000);
+  };
+
+  const stopTimer = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
     }
-  }, []);
+  };
 
   useEffect(() => {
-    if (isRunning && clockInTime) {
-      localStorage.setItem("clockInTime", clockInTime);
-      localStorage.setItem("totalBreakSeconds", totalBreakSeconds);
-    } else {
-      localStorage.removeItem("clockInTime");
-      localStorage.removeItem("totalBreakSeconds");
-    }
-  }, [isRunning, clockInTime, totalBreakSeconds]);
+    async function fetchActiveSession() {
+      if (!token) return;
+      try {
+        const res = await fetch("http://127.0.0.1:8000/attendance-rt/active", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
 
-  useEffect(() => {
-    localStorage.setItem("isOnBreak", isOnBreak ? "true" : "false");
-    if (breakStartTime) {
-      localStorage.setItem("breakStartTime", breakStartTime);
-    } else {
-      localStorage.removeItem("breakStartTime");
-    }
-  }, [isOnBreak, breakStartTime]);
+        if (data.session_id && data.status) {
+          setClockInTime(data.clock_in_time);
+          setClockOutTime(data.clock_out_time);
+          setTotalBreakSeconds(data.elapsed_break_seconds || 0);
+          accumulatedSecondsRef.current = data.elapsed_work_seconds || 0;
+          setTime(accumulatedSecondsRef.current);
+          setIsOnBreak(data.status === "break");
+          setIsRunning(data.status === "active");
 
-  useEffect(() => {
-    let interval;
-    if (isRunning && clockInTime && !isOnBreak) {
-      interval = setInterval(() => {
-        const elapsed = Math.floor((new Date() - new Date(clockInTime)) / 1000) - totalBreakSeconds;
-        setTime(elapsed > 0 ? elapsed : 0);
-      }, 1000);
+          if (data.status === "active") {
+            startTimer();
+          } else {
+            stopTimer();
+          }
+        } else {
+          // No active session
+          setClockInTime(null);
+          setClockOutTime(null);
+          setIsRunning(false);
+          setIsOnBreak(false);
+          setTotalBreakSeconds(0);
+          accumulatedSecondsRef.current = 0;
+          setTime(0);
+          stopTimer();
+        }
+      } catch (err) {
+        console.error("Error fetching active session", err);
+      }
     }
-    return () => clearInterval(interval);
-  }, [isRunning, clockInTime, isOnBreak, totalBreakSeconds]);
+    fetchActiveSession();
+    return () => {
+      stopTimer();
+    };
+  }, [token]);
+
+  // POST helper
+  const postAttendanceRT = async (endpoint) => {
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/attendance-rt/${endpoint}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        alert("Action failed: " + err.detail);
+        return null;
+      }
+      return await res.json();
+    } catch {
+      alert("Error: could not reach server");
+      return null;
+    }
+  };
 
   const formatTime = (secs) => {
     const h = String(Math.floor(secs / 3600)).padStart(2, "0");
@@ -63,190 +108,76 @@ function TimerCard({ onClockAction }) {
     return `${h}:${m}:${s}`;
   };
 
-  const logAttendance = async (payload) => {
-    try {
-      const res = await fetch("http://127.0.0.1:8000/attendance/attendance/log", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
+  const formatTimeIST = (isoString) => {
+    if (!isoString) return "--";
+    const date = new Date(isoString);
+    const istDate = new Date(date.getTime() + 330 * 60000);
+    return istDate.toTimeString().slice(0, 5);
+  };
 
-      if (!res.ok) {
-        const err = await res.json();
-        console.error("Error logging attendance:", err);
-        alert("Failed to log attendance");
-        return false;
+  const handleClockIn = async (e) => {
+    e.preventDefault();
+    const data = await postAttendanceRT("clock-in");
+    if (data) {
+      setClockInTime(new Date().toISOString());
+      setIsRunning(true);
+      setIsOnBreak(false);
+      setTotalBreakSeconds(0);
+      setClockOutTime(null);
+      accumulatedSecondsRef.current = 0;
+      setTime(0);
+      startTimer();
+      if (onClockAction) onClockAction();
+    }
+  };
+
+  const handleClockOut = async (e) => {
+    e.preventDefault();
+    if (isOnBreak) {
+      alert("Please end your break before clocking out.");
+      return;
+    }
+    if (!window.confirm("Confirm clock out?")) return;
+    const data = await postAttendanceRT("clock-out");
+    if (data) {
+      setClockOutTime(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
+      setIsRunning(false);
+      setClockInTime(null);
+      setTime(0);
+      setTotalBreakSeconds(0);
+      setBreakStartTime(null);
+      setIsOnBreak(false);
+      stopTimer();
+      if (onClockAction) {
+        setTimeout(() => onClockAction(), 1500);
       }
-
-      console.log("Attendance logged:", await res.json());
-      return true;
-    } catch (err) {
-      console.error("API error:", err);
-      alert("Error reaching server");
-      return false;
     }
   };
 
-  const updateAttendance = async (attendanceId, payload) => {
-    try {
-      const res = await fetch(`http://127.0.0.1:8000/attendance/${attendanceId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        console.error("Error updating attendance:", err);
-        alert("Failed to update attendance");
-        return false;
+  const handleBreakToggle = async (e) => {
+    e.preventDefault();
+    if (!isOnBreak) {
+      const data = await postAttendanceRT("start-break");
+      if (data) {
+        setIsOnBreak(true);
+        setIsRunning(false);
+        setBreakStartTime(new Date().toISOString());
+        stopTimer();
       }
-
-      console.log("Attendance updated:", await res.json());
-      return true;
-    } catch (err) {
-      console.error("API error:", err);
-      alert("Error reaching server");
-      return false;
+    } else {
+      const data = await postAttendanceRT("stop-break");
+      if (data) {
+        const breakEnd = new Date();
+        const breakStart = new Date(breakStartTime);
+        const breakDurationSecs = Math.floor((breakEnd - breakStart) / 1000);
+        setTotalBreakSeconds((prev) => prev + breakDurationSecs);
+        setIsOnBreak(false);
+        setIsRunning(true);
+        setBreakStartTime(null);
+        startTimer();
+      }
     }
   };
-
-  const handleClockIn = async (event) => {
-    event.preventDefault();
-    const nowIso = new Date().toISOString();
-    setClockInTime(nowIso);
-    setIsRunning(true);
-    setIsOnBreak(false);
-    setTime(0);
-    setTotalBreakSeconds(0);
-    setClockOutTime(null);
-
-    const success = await logAttendance({
-      employee_id: Number(employeeId),
-      login_time: nowIso,
-      logout_time: null,
-      on_leave: false,
-      work_hours: 0,
-    });
-
-    if (success && onClockAction) onClockAction();
-
-    // Save attendance id from response for clock out (optional, if needed)
-    const response = await fetch("http://127.0.0.1:8000/attendance/attendance/log", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        employee_id: Number(employeeId),
-        login_time: nowIso,
-        logout_time: null,
-        on_leave: false,
-        work_hours: 0,
-      }),
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      localStorage.setItem("openAttendanceId", data.id);
-    }
-  };
-
-  const handleClockOut = async (event) => {
-  event.preventDefault();
-
-  if (isOnBreak) {
-    alert("Please end your break before clocking out.");
-    return;
-  }
-
-  const confirm = window.confirm("Are you sure you want to clock out?");
-  if (!confirm) return;
-
-  // UTC timezone-aware ISO string for logout time
-  const nowIso = new Date().toISOString();
-
-  // Clock out time for UI display (local time readable)
-  setClockOutTime(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
-  setIsRunning(false);
-
-  // Calculate worked hours in fractional hours
-  const workedHours = time / 3600;
-
-  // Retrieve the attendance ID created on clock in
-  const openAttendanceId = localStorage.getItem("openAttendanceId");
-  if (!openAttendanceId) {
-    alert("No active clock-in record found.");
-    return;
-  }
-
-  // Send PUT request to update attendance record with logout_time and work_hours
-  const res = await fetch(`http://127.0.0.1:8000/attendance/${openAttendanceId}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
-    },
-    body: JSON.stringify({
-      logout_time: nowIso,
-      work_hours: workedHours,
-      on_leave: false
-    })
-  });
-
-  if (!res.ok) {
-    alert("Failed to update attendance on clock out.");
-    return;
-  }
-
-  if (res.ok && onClockAction) onClockAction();
-
-  // Clear all relevant states and localStorage keys
-  setClockInTime(null);
-  setClockOutTime(null);
-  setTime(0);
-  setTotalBreakSeconds(0);
-  setBreakStartTime(null);
-  setIsOnBreak(false);
-
-  localStorage.removeItem("clockInTime");
-  localStorage.removeItem("totalBreakSeconds");
-  localStorage.removeItem("isOnBreak");
-  localStorage.removeItem("breakStartTime");
-  localStorage.removeItem("openAttendanceId");
-};
-
-
-
-  const handleBreakToggle = (event) => {
-  event.preventDefault();
-
-  if (!isOnBreak) {
-    // Start break: pause timer, save break start timestamp
-    setIsOnBreak(true);
-    setIsRunning(false);
-    setBreakStartTime(new Date().toISOString());
-  } else {
-    // End break: calculate break duration, add to totalBreakSeconds, resume timer
-    const breakEnd = new Date();
-    const breakStart = new Date(breakStartTime);
-    const breakDurationSecs = Math.floor((breakEnd - breakStart) / 1000);
-
-    setTotalBreakSeconds(prev => prev + breakDurationSecs);
-    setIsOnBreak(false);
-    setIsRunning(true);
-    setBreakStartTime(null);
-  }
-};
-
-
 
   return (
     <div className="grid grid-cols-2 gap-3">
@@ -256,20 +187,20 @@ function TimerCard({ onClockAction }) {
             {formatTime(time)}
           </span>
         </div>
-        <p className="mt-2 text-gray-600">
-          Clocked in at {clockInTime ? new Date(clockInTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "--"}
-        </p>
+        <p className="mt-2 text-gray-600">Clocked in at {formatTimeIST(clockInTime)}</p>
         {isOnBreak && <p className="text-yellow-600 mt-1">On Break...</p>}
       </div>
       <div className="grid grid-cols-2 gap-4 ml-4 mr-23 mt-4">
         <Button
+          type="button"
           className="bg-green-500 hover:bg-green-600 text-white px-2 py-6 rounded-lg"
           onClick={handleClockIn}
           disabled={isRunning}
         >
-          Clock In {clockInTime ? new Date(clockInTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}
+          Clock In {formatTimeIST(clockInTime)}
         </Button>
         <Button
+          type="button"
           className="bg-gray-700 hover:bg-gray-800 text-white px-2 py-6 rounded-lg"
           onClick={handleClockOut}
           disabled={!isRunning}
@@ -277,6 +208,7 @@ function TimerCard({ onClockAction }) {
           Clock Out {clockOutTime || ""}
         </Button>
         <Button
+          type="button"
           className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-6 rounded-lg"
           onClick={() => setTime((t) => t + 3600)}
           disabled={!isRunning || isOnBreak}
@@ -284,15 +216,13 @@ function TimerCard({ onClockAction }) {
           + Add Hours
         </Button>
         <Button
-  className={`px-2 py-6 rounded-lg ${
-    isOnBreak ? "bg-yellow-600 hover:bg-yellow-700" : "bg-yellow-400 hover:bg-yellow-500"
-  } text-white`}
-  onClick={handleBreakToggle}
-  disabled={!isRunning && !isOnBreak}
->
-  {isOnBreak ? "End Break" : "Start Break"}
-</Button>
-
+          type="button"
+          className={`px-2 py-6 rounded-lg ${isOnBreak ? "bg-yellow-600 hover:bg-yellow-700" : "bg-yellow-400 hover:bg-yellow-500"} text-white`}
+          onClick={handleBreakToggle}
+          disabled={!isRunning && !isOnBreak}
+        >
+          {isOnBreak ? "End Break" : "Start Break"}
+        </Button>
       </div>
     </div>
   );

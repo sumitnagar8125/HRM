@@ -1,14 +1,39 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Calendar, ClipboardList, Image, AlignLeft } from "lucide-react";
 
 export default function Newleave() {
+  const [formData, setFormData] = useState({
+      "start_date": "",
+      "end_date": "",
+      "leave_type": "",
+      "reason": ""
+  })
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    
+    // checks
+
+    const payload = {
+      ...formData,
+      employee_id: ""
+    }
+
+    const response = await fetch("/leaves", {
+      method: "POST",
+      body: JSON.stringify(payload),
+      headers: {
+        // ""
+      }
+    })
+  }
   return (
     <div className="p-6 w-full">
       <div className="bg-white rounded-xl shadow-md p-6 border">
         {/* Form */}
-        <form className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5">
           {/* Policy */}
           <div>
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
