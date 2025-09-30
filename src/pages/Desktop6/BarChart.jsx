@@ -1,4 +1,3 @@
-// src/pages/Desktop6/BarChart.jsx
 "use client";
 import React from "react";
 import {

@@ -14,82 +14,80 @@ export default function RightPanel() {
   const [password, setPassword] = useState("");
 
   // Signup state
+  const [signupUsername, setSignupUsername] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
-  const [signupRole, setSignupRole] = useState("employee");
+  const [signupPhone, setSignupPhone] = useState("");
+  const [selectedRole, setSelectedRole] = useState("employee"); // State for role
 
-  // ✅ Handle Login
+  // Handle Login
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (!email || !password) {
+    if (!email.trim() || !password.trim()) {
       alert("Please enter a valid email or password");
       return;
     }
-
     try {
+      const body = new URLSearchParams();
+      body.append("grant_type", "password");
+      body.append("username", email.trim());
+      body.append("password", password.trim());
+
       const response = await fetch("http://127.0.0.1:8000/token", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          username: email,
-          password: password,
-        }),
+        body: body.toString(),
       });
 
       if (!response.ok) {
-        alert("Invalid credentials");
+        const err = await response.text();
+        alert("Invalid credentials: " + err);
         return;
       }
 
-      const responseBody = await response.json();
-      console.log("Login success:", responseBody);
+      const data = await response.json();
+      localStorage.setItem("token", data.access_token);
 
-      // Save token
-      localStorage.setItem("token", responseBody.access_token);
-
-      // Fetch user details for employee_id
       const userResponse = await fetch("http://127.0.0.1:8000/users/me", {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${responseBody.access_token}`,
-        },
+        headers: { Authorization: `Bearer ${data.access_token}` },
       });
 
       if (!userResponse.ok) {
         alert("Failed to fetch user info");
         return;
       }
-
       const userData = await userResponse.json();
-      console.log("User info:", userData);
-
-      // Save employee_id (adjust key based on backend response)
       localStorage.setItem("employee_id", userData.employee_id || userData.id);
-
-      // Redirect to home
       window.location.href = "/home";
-    } catch (err) {
-      console.error("Login error", err);
+    } catch (error) {
       alert("Something went wrong");
+      console.error(error);
     }
   };
 
-  // ✅ Handle Signup
+  // Handle Signup
   const handleSignUp = async (e) => {
     e.preventDefault();
-    if (!signupEmail || !signupPassword) {
-      alert("Please enter a valid email and password");
+
+    if (!signupUsername || !signupEmail || !signupPassword) {
+      alert("Please enter valid username, email, and password");
       return;
     }
+
+    console.log("Signup data sending role:", selectedRole); // Debug log
 
     try {
       const response = await fetch("http://127.0.0.1:8000/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          username: signupEmail,
+          username: signupUsername,
           password: signupPassword,
-          role: signupRole,
+          role: selectedRole, // Use the controlled state
+          email: signupEmail,
+          phone: signupPhone,
+          avatar_url: "",
+          emp_code: "",
         }),
       });
 
@@ -99,16 +97,13 @@ export default function RightPanel() {
         return;
       }
 
-      const user = await response.json();
-      console.log("Signup successful:", user);
       alert("Signup successful! You can now login.");
-
       setEmail(signupEmail);
       setPassword(signupPassword);
       setIsLogin(true);
-    } catch (err) {
-      console.error("Signup error", err);
+    } catch (error) {
       alert("Something went wrong during signup");
+      console.error(error);
     }
   };
 
@@ -126,81 +121,73 @@ export default function RightPanel() {
           </p>
         </div>
 
-        {/* Form */}
-        <form
-          onSubmit={isLogin ? handleLogin : handleSignUp}
-          className="space-y-6"
-        >
-          {/* Email */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email
-            </label>
-            <div className="relative">
-              <Input
-                type="email"
-                placeholder="Enter your email..."
-                value={isLogin ? email : signupEmail}
-                onChange={(e) =>
-                  isLogin
-                    ? setEmail(e.target.value)
-                    : setSignupEmail(e.target.value)
-                }
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-                <svg
-                  className="w-5 h-5 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
-                  />
-                </svg>
+        <form onSubmit={isLogin ? handleLogin : handleSignUp} className="space-y-6">
+          {!isLogin && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                <div className="flex gap-4 mb-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedRole("employee")}
+                    className={`px-4 py-2 rounded-lg border ${
+                      selectedRole === "employee"
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "border-gray-300"
+                    }`}
+                  >
+                    Employee
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedRole("admin")}
+                    className={`px-4 py-2 rounded-lg border ${
+                      selectedRole === "admin"
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "border-gray-300"
+                    }`}
+                  >
+                    Admin
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  value={selectedRole}
+                  readOnly
+                  className="w-full pl-4 pr-4 py-3 border border-gray-200 rounded-lg bg-gray-100 cursor-not-allowed"
+                />
               </div>
-            </div>
-          </div>
 
-          {/* Password */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Password
-            </label>
-            <div className="relative">
               <Input
-                type="password"
-                placeholder="At least 6 characters..."
-                value={isLogin ? password : signupPassword}
-                onChange={(e) =>
-                  isLogin
-                    ? setPassword(e.target.value)
-                    : setSignupPassword(e.target.value)
-                }
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                type="text"
+                placeholder="Username"
+                value={signupUsername}
+                onChange={(e) => setSignupUsername(e.target.value)}
+                required
               />
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-                <svg
-                  className="w-5 h-5 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
+              <Input
+                type="text"
+                placeholder="Phone number"
+                value={signupPhone}
+                onChange={(e) => setSignupPhone(e.target.value)}
+              />
+            </>
+          )}
 
+          <Input
+            type="text"
+            placeholder="Email"
+            value={isLogin ? email : signupEmail}
+            onChange={(e) => (isLogin ? setEmail(e.target.value) : setSignupEmail(e.target.value))}
+            required
+          />
+          <Input
+            type="password"
+            placeholder="Password"
+            value={isLogin ? password : signupPassword}
+            onChange={(e) => (isLogin ? setPassword(e.target.value) : setSignupPassword(e.target.value))}
+            required
+          />
           <Button
             type="submit"
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium"
@@ -212,7 +199,6 @@ export default function RightPanel() {
 
         <Divider />
 
-        {/* Social login buttons */}
         <div className="space-y-3">
           <SocialButton
             icon={<Image src="/micro.png" alt="Microsoft" width={20} height={15} />}
@@ -226,7 +212,6 @@ export default function RightPanel() {
           />
         </div>
 
-        {/* Toggle login/signup */}
         <p className="text-center text-sm text-gray-600 mt-6">
           {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
           <button

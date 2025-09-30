@@ -1,37 +1,90 @@
-"use client";
 import React, { useState, useEffect } from "react";
-import Header from "./Header";
+import axios from "axios";
 import Profile from "./Profile";
+import Header from "./header";
 
 export default function DashboardLayout() {
   const [user, setUser] = useState(null);
+  const [employeeProfile, setEmployeeProfile] = useState(null);
+  const [showEmployeeList, setShowEmployeeList] = useState(false);
 
   useEffect(() => {
-    // Dummy data (replace with real API fetch later)
-    const dummyUser = {
-      name: "XYZ Asyaa",
-      employeeId: "230122239002",
-      email: "xyz123@gmail.com",
-      image: "/logo.png", // or any static placeholder image
-    };
-
-    // Simulate API call delay
-    setTimeout(() => {
-      setUser(dummyUser);
-    }, 500);
+    const accessToken = localStorage.getItem("token");
+    axios.get("http://127.0.0.1:8000/users/me", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+    .then(userRes => {
+      setUser(userRes.data);
+      if (userRes.data.role === "employee") {
+        return axios.get("http://127.0.0.1:8000/employees/me", {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+      } else {
+        setEmployeeProfile(null);
+        return null;
+      }
+    })
+    .then(empRes => {
+      if(empRes) setEmployeeProfile(empRes.data);
+    })
+    .catch(() => {
+      setUser(null);
+      setEmployeeProfile(null);
+    });
   }, []);
 
-  return (
-    <div className="flex flex-col h-screen bg-gray-50">
-      {/* Header */}
-      <Header />
+  const isAdmin = user?.role === "admin";
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
-        <div className="max-w-5xl mx-auto">
-          {user ? <Profile user={user} /> : <p>Loading profile...</p>}
-        </div>
-      </main>
-    </div>
+  const handleManageEmployeesClick = () => {
+    setShowEmployeeList(true);
+  };
+
+  const handleEditProfile = async (updatedFields) => {
+    if (!employeeProfile) return;
+    const accessToken = localStorage.getItem("token");
+    try {
+      const response = await axios.put(
+        `http://127.0.0.1:8000/employees/${employeeProfile.id}`,
+        updatedFields,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      setEmployeeProfile(response.data);
+      alert("Profile updated successfully!");
+    } catch {
+      alert("Failed to update profile.");
+    }
+  };
+
+  const handleEditImage = async (avatarData) => {
+    if (!employeeProfile) return;
+    const accessToken = localStorage.getItem("token");
+    try {
+      await axios.put(
+        `http://127.0.0.1:8000/employees/me/avatar`,
+        { avatar_data: avatarData },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      setEmployeeProfile({ ...employeeProfile, avatar_url: avatarData });
+      alert("Profile image updated!");
+    } catch {
+      alert("Failed to update profile image.");
+    }
+  };
+
+  if (!user) return <div>Loading...</div>;
+
+  return (
+    <>
+      <Header isAdmin={isAdmin} onManageEmployees={handleManageEmployeesClick} />
+      <Profile
+        user={user.role === "employee" ? employeeProfile : user}
+        isAdmin={isAdmin}
+        isPureAdmin={user.role === "admin"}
+        onEditProfile={handleEditProfile}
+        onEditImage={handleEditImage}
+        showEmployeeList={showEmployeeList}
+        setShowEmployeeList={setShowEmployeeList}
+      />
+    </>
   );
 }

@@ -8,93 +8,61 @@ import { Clock, Coffee, BarChart3 } from "lucide-react";
 
 export default function DashboardLayout() {
   const [token, setToken] = useState(null);
-  const [employeeId, setEmployeeId] = useState(null);
   const [weeklyData, setWeeklyData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       setToken(localStorage.getItem("token"));
-      setEmployeeId(Number(localStorage.getItem("employee_id")));
     }
   }, []);
 
   const fetchAttendance = async () => {
-    if (!token || !employeeId) return;
+  if (!token) return;
 
-    setLoading(true);
+  setLoading(true);
 
-    try {
-      const res = await fetch(
-        `http://127.0.0.1:8000/attendance/?employee_id=${employeeId}&limit=31`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+  try {
+    const res = await fetch(`http://127.0.0.1:8000/attendance-rt/recent?days=14`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-      if (!res.ok) throw new Error("Failed to fetch attendance");
+    if (!res.ok) throw new Error("Failed to fetch attendance");
 
-      const data = await res.json();
+    const data = await res.json();
 
-      const employeeRecords = data.filter(
-        (record) =>
-          record.employee_id === employeeId &&
-          record.login_time !== "1970-01-01 00:00:00.000"
-      );
+    // Take only last 7 days
+    const last7Days = data.slice(-7);
+    const daysLabel = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-      const today = new Date();
-      const firstDay = new Date(today);
-      firstDay.setHours(0, 0, 0, 0);
-      firstDay.setDate(today.getDate() - today.getDay());
-      const lastDay = new Date(firstDay);
-      lastDay.setDate(firstDay.getDate() + 6);
-      lastDay.setHours(23, 59, 59, 999);
+    // Aggregate by day label
+    const dayWise = {};
+    last7Days.forEach(record => {
+      const dateObj = new Date(record.date);
+      const day = daysLabel[dateObj.getDay()];
+      if (!dayWise[day]) {
+        dayWise[day] = { day, workedHours: 0, breaks: 0, overtime: 0 };
+      }
+      dayWise[day].workedHours += record.total_work_seconds / 3600;
+      dayWise[day].breaks += record.total_break_seconds / 3600;
+      dayWise[day].overtime += record.ot_sec / 3600;
+    });
 
-      const currentWeekRecords = employeeRecords.filter((record) => {
-        const loginDate = new Date(record.login_time);
-        return loginDate >= firstDay && loginDate <= lastDay;
-      });
+    // Always create 7 bars in calendar order
+    const weekly = daysLabel.map(day => dayWise[day] || { day, workedHours: 0, breaks: 0, overtime: 0 });
 
-      const daysLabel = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-      const weekly = Array.from({ length: 7 }, (_, i) => ({
-        day: daysLabel[i],
-        workedHours: 0,
-        breaks: 0,
-        overtime: 0,
-      }));
+    setWeeklyData(weekly);
+    setLoading(false);
+  } catch (err) {
+    console.error("Error fetching attendance:", err);
+    setLoading(false);
+  }
+};
 
-      currentWeekRecords.forEach((record) => {
-        if (!record.login_time || !record.logout_time) return;
-
-        const loginDateUTC = new Date(record.login_time);
-        const logoutDateUTC = new Date(record.logout_time);
-
-        const loginDateIST = new Date(loginDateUTC.getTime() + 19800000);
-        const logoutDateIST = new Date(logoutDateUTC.getTime() + 19800000);
-
-        if (isNaN(loginDateIST) || isNaN(logoutDateIST)) return;
-
-        const worked = (logoutDateIST - loginDateIST) / 3600000;
-        if (worked <= 0 || worked > 24) return;
-
-        const idx = loginDateIST.getDay();
-
-        weekly[idx].workedHours += worked;
-        if (record.on_leave) weekly[idx].breaks += worked;
-        if (worked > 8) weekly[idx].overtime += worked - 8;
-      });
-
-      setWeeklyData(weekly);
-      setLoading(false);
-    } catch (err) {
-      console.error("Error fetching attendance:", err);
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     fetchAttendance();
-  }, [token, employeeId]);
+  }, [token]);
 
   if (loading) return <div className="p-6">Loading dashboard...</div>;
 

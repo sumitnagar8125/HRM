@@ -42,9 +42,9 @@ export default function Newleave() {
             </label>
             <select className="mt-2 w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 outline-none">
               <option value="">Select a Policy</option>
-              <option value="Sick">Sick Leave</option>
-              <option value="Casual">Casual Leave</option>
-              <option value="Earned">Earned Leave</option>
+              <option value="Sick">Vacation</option>
+              <option value="Casual">Medical</option>
+              <option value="Earned">Personal</option>
             </select>
           </div>
 
