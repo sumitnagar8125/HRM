@@ -1,6 +1,6 @@
 "use client";
-import Desktop9 from "@/src/pages/Desktop9";
+import Desktop_Post from "@/src/pages/Desktop_Post";
 
 export default function IndexPage() {
-  return <Desktop9 />;
+  return <Desktop_Post />;
 }
