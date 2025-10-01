@@ -1,8 +1,8 @@
 "use client";
-import Desktop9 from "@/src/pages/Desktop9";
+import Desktop_Status from "@/src/pages/Desktop_Status";
 
 export default function IndexPage() {
-  return <Desktop9 />;
+  return <Desktop_Status />;
 }
 
 
