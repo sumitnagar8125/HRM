@@ -6,16 +6,19 @@ import Link from "next/link";
 import { 
   Home, Inbox, Clock, User, Building2, Calendar, HelpCircle, LogOut, 
   HeadphonesIcon,
-  PlaneIcon
+  PlaneIcon,PenSquare, CheckCircle
+
 } from "lucide-react";
 
 const menuItems = [
   { name: "Home", icon: Home, path: "/home" },
-  { name: "Inbox", icon: Inbox, path: "/inbox" },
+  { name: "Staus", icon: CheckCircle, path: "/status" },
   { name: "Timesheet",icon:Calendar, path: "/timesheet" },
   { name: "Profile", icon: User, path: "/profile" },
-  { name: "Company", icon: Building2, path: "/company" },
   { name: "Leave", icon: PlaneIcon, path: "/leave" },
+  { name: "Inbox", icon: Inbox, path: "/inbox" },
+  { name: "Post", icon: PenSquare, path: "/post"},
+  { name: "Company", icon: Building2, path: "/company" },
   { name: "Support", icon: HeadphonesIcon, path: "/support" },
 ];
 
