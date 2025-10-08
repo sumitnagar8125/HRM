@@ -1,80 +1,45 @@
 import React, { useState } from "react";
-import { FaExclamationCircle } from "react-icons/fa";
+import LeaveCard from "./LeaveCard";
+import LeaveDetailModal from "./LeaveDetailModal";
 
-const Notification = ({ notifications, messages }) => {
-  const [activeTab, setActiveTab] = useState("notifications");
+export default function Notification({ notifications, leaveStatus, allApplications, role, userId }) {
+  const [tab, setTab] = useState("notifications");
+  const [selectedLeaveId, setSelectedLeaveId] = useState(null);
+  const isAdmin = role === "admin" || role === "super_admin";
+
+  const refresh = () => window.location.reload();
+
+  let data = [];
+  if(tab === "notifications") data = notifications;
+  else if(tab === "leaveStatus") data = leaveStatus;
+  else if(tab === "allApplications") data = allApplications;
 
   return (
-    <div className="p-6 bg-white shadow rounded-lg">
-      {/* Tabs */}
-      <div className="flex gap-4 mb-4 border-b">
-        <button
-          className={`pb-2 ${
-            activeTab === "notifications"
-              ? "border-b-2 border-blue-500 text-blue-600 font-semibold"
-              : "text-gray-600"
-          }`}
-          onClick={() => setActiveTab("notifications")}
-        >
-          Notifications
-        </button>
-        <button
-          className={`pb-2 ${
-            activeTab === "messages"
-              ? "border-b-2 border-blue-500 text-blue-600 font-semibold"
-              : "text-gray-600"
-          }`}
-          onClick={() => setActiveTab("messages")}
-        >
-          Messages
-        </button>
-      </div>
-
-      {/* Scrollable Section */}
-      <div className="max-h-96 overflow-y-auto space-y-4 pr-2">
-        {activeTab === "notifications" &&
-          notifications.map((note) => (
-            <div
-              key={note.id}
-              className="flex justify-between items-start p-4 bg-gray-50 rounded-lg shadow-sm"
-            >
-              <div className="flex items-start gap-3">
-                <FaExclamationCircle className="text-yellow-500 mt-1" size={18} />
-                <div>
-                  <h4 className="font-semibold text-gray-800">{note.title}</h4>
-                  <p className="text-gray-600 text-sm">{note.message}</p>
-
-                  {/* Action buttons */}
-                  <div className="mt-2 flex gap-2">
-                    <button className="px-3 py-1 text-sm bg-green-500 text-white rounded-md hover:bg-green-600">
-                      Approve
-                    </button>
-                    <button className="px-3 py-1 text-sm bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400">
-                      Review
-                    </button>
-                  </div>
-                </div>
+    <>
+      <div className="p-6 bg-white shadow rounded-lg">
+        <div className="flex gap-4 mb-4 border-b">
+          <button className={`pb-2 ${tab === "notifications" ? "border-b-2 border-blue-500 text-blue-600 font-semibold" : "text-gray-600"}`} onClick={() => setTab("notifications")}>Notifications</button>
+          <button className={`pb-2 ${tab === "leaveStatus" ? "border-b-2 border-blue-500 text-blue-600 font-semibold" : "text-gray-600"}`} onClick={() => setTab("leaveStatus")}>Leave Status</button>
+          {isAdmin && <button className={`pb-2 ${tab === "allApplications" ? "border-b-2 border-blue-500 text-blue-600 font-semibold" : "text-gray-600"}`} onClick={() => setTab("allApplications")}>All Applications</button>}
+        </div>
+        <div className="max-h-96 overflow-y-auto pr-2">
+          {data.length === 0 ? <p className="text-gray-600">No data found.</p> : (
+            data.map(leave => (
+              <div key={leave.id} onClick={() => setSelectedLeaveId(leave.id)} className="cursor-pointer hover:bg-blue-50 rounded">
+                <LeaveCard leave={leave} />
               </div>
-              <span className="text-xs text-gray-500">{note.time}</span>
-            </div>
-          ))}
-
-        {activeTab === "messages" &&
-          messages.map((msg) => (
-            <div
-              key={msg.id}
-              className="flex justify-between items-start p-4 bg-gray-50 rounded-lg shadow-sm"
-            >
-              <div>
-                <h4 className="font-semibold text-gray-800">{msg.from}</h4>
-                <p className="text-gray-600 text-sm">{msg.message}</p>
-              </div>
-              <span className="text-xs text-gray-500">{msg.time}</span>
-            </div>
-          ))}
+            ))
+          )}
+        </div>
       </div>
-    </div>
+      {selectedLeaveId &&
+        <LeaveDetailModal
+          leaveId={selectedLeaveId}
+          onClose={() => setSelectedLeaveId(null)}
+          role={role}
+          selfId={userId}
+          refresh={refresh}
+        />}
+    </>
   );
-};
-
-export default Notification;
+}

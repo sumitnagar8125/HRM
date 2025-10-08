@@ -1,129 +1,69 @@
-import React from "react";
-import Header from "./Header";
+import React, { useEffect, useState } from "react";
 import Notification from "./Notification";
+import Header from "./Header";
+
+const BACKEND_URL = "http://127.0.0.1:8000";
 
 const DashboardLayout = () => {
-  // Dummy data (replace with API calls later)
-  const notifications = [
-    {
-      id: 1,
-      title: "Pending Leave Approval",
-      message: "Sarah vacation leave request requires your approval (Dec 15–22, 2025)",
-      time: "2h ago",
-    },
-    {
-      id: 2,
-      title: "New Timesheet Submitted",
-      message: "Mike submitted his timesheet for review.",
-      time: "4h ago",
-    },
-    {
-      id: 3,
-      title: "Policy Update",
-      message: "Company holiday policy has been updated. Please review.",
-      time: "1d ago",
-    },
-     {
-      id: 1,
-      title: "Pending Leave Approval",
-      message: "Sarah vacation leave request requires your approval (Dec 15–22, 2025)",
-      time: "2h ago",
-    },
-    {
-      id: 2,
-      title: "New Timesheet Submitted",
-      message: "Mike submitted his timesheet for review.",
-      time: "4h ago",
-    },
-    {
-      id: 3,
-      title: "Policy Update",
-      message: "Company holiday policy has been updated. Please review.",
-      time: "1d ago",
-    },
-     {
-      id: 1,
-      title: "Pending Leave Approval",
-      message: "Sarah vacation leave request requires your approval (Dec 15–22, 2025)",
-      time: "2h ago",
-    },
-    {
-      id: 2,
-      title: "New Timesheet Submitted",
-      message: "Mike submitted his timesheet for review.",
-      time: "4h ago",
-    },
-    {
-      id: 3,
-      title: "Policy Update",
-      message: "Company holiday policy has been updated. Please review.",
-      time: "1d ago",
-    },
-  ];
+  const [role, setRole] = useState("");
+  const [userId, setUserId] = useState(null);
+  const [leaves, setLeaves] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const messages = [
-    {
-      id: 1,
-      from: "HR Admin",
-      message: "Please update your profile details before the end of the week.",
-      time: "1d ago",
-    },
-    {
-      id: 2,
-      from: "Team Lead",
-      message: "Project meeting rescheduled to 3 PM tomorrow.",
-      time: "3d ago",
-    },
-    {
-      id: 3,
-      from: "CEO",
-      message: "Great work on the last sprint team! Keep it up.",
-      time: "5d ago",
-    },
-    {
-      id: 1,
-      from: "HR Admin",
-      message: "Please update your profile details before the end of the week.",
-      time: "1d ago",
-    },
-    {
-      id: 2,
-      from: "Team Lead",
-      message: "Project meeting rescheduled to 3 PM tomorrow.",
-      time: "3d ago",
-    },
-    {
-      id: 3,
-      from: "CEO",
-      message: "Great work on the last sprint team! Keep it up.",
-      time: "5d ago",
-    },
-    {
-      id: 1,
-      from: "HR Admin",
-      message: "Please update your profile details before the end of the week.",
-      time: "1d ago",
-    },
-    {
-      id: 2,
-      from: "Team Lead",
-      message: "Project meeting rescheduled to 3 PM tomorrow.",
-      time: "3d ago",
-    },
-    {
-      id: 3,
-      from: "CEO",
-      message: "Great work on the last sprint team! Keep it up.",
-      time: "5d ago",
-    },
-  ];
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    fetch(`${BACKEND_URL}/users/me`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(user => {
+        setRole(user.role || "employee");
+        setUserId(user.employee_id || null);
+        return fetch(`${BACKEND_URL}/leaves/`, { headers: { Authorization: `Bearer ${token}` } });
+      })
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(data => setLeaves(data))
+      .catch(() => setLeaves([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  let notifications = [];
+  let leaveStatus = [];
+  let allApplications = [];
+
+  if (role === "admin" || role === "super_admin") {
+    notifications = leaves.filter(lv => lv.status === "pending").map(lv => ({
+      id: lv.id,
+      leaveId: lv.id,
+      employee_id: lv.employee_id,
+      type: lv.leave_type,
+      start_date: lv.start_date,
+      end_date: lv.end_date,
+      reason: lv.reason,
+      status: lv.status,
+    }));
+
+    leaveStatus = userId ? leaves.filter(lv => lv.employee_id === userId).map(lv => ({ ...lv, type: lv.leave_type })) : [];
+    allApplications = leaves.map(lv => ({ ...lv, type: lv.leave_type }));
+  } else {
+    leaveStatus = leaves.map(lv => ({ ...lv, type: lv.leave_type }));
+  }
 
   return (
     <div className="flex-1">
       <Header />
       <main className="p-6">
-        {/* Pass dummy data to Notification */}
-        <Notification notifications={notifications} messages={messages} />
+        {loading ? <p>Loading leave data...</p> : (
+          <Notification
+            notifications={notifications}
+            leaveStatus={leaveStatus}
+            allApplications={allApplications}
+            role={role}
+            userId={userId}
+          />
+        )}
       </main>
     </div>
   );
