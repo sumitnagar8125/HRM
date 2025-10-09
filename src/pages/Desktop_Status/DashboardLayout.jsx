@@ -37,16 +37,19 @@ function DashboardLayout() {
 
   return (
     <div style={{ padding: "28px" }}>
-      <h2
-        style={{
-          fontWeight: "700",
-          fontSize: "1.5rem",
-          marginBottom: "18px",
-          letterSpacing: ".5px",
-        }}
-      >
-        Employee Status Dashboard
-      </h2>
+     <h2
+  style={{
+    fontWeight: "600",
+    fontSize: "1.75rem",
+    marginBottom: "24px",
+    color: "#222222",
+   fontFamily: "'Lato', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+
+    letterSpacing: "0.03em",
+  }}
+>
+  Employee Status Dashboard
+</h2>
       <Status employees={employees} />
     </div>
   );

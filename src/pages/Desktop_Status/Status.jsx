@@ -1,140 +1,159 @@
 import React, { useState } from "react";
 
+// Styles
 const cardStyles = {
-  background: "#fff",
-  borderRadius: "8px",
-  boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+  background: "#ffffff",
+  borderRadius: "10px",
+  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
   padding: "16px",
-  marginBottom: "12px",
+  marginBottom: "14px",
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
+  transition: "transform 0.2s ease-in-out",
+};
+const cardHoverStyles = {
+  transform: "scale(1.02)",
+  boxShadow: "0 8px 20px rgba(0, 0, 0, 0.15)",
 };
 
 const sectionStyles = {
-  height: "375px",
+  height: "400px",
   overflowY: "auto",
-  border: "1px solid #eef1f6",
-  background: "#f6f8fa",
-  margin: "0 12px 0 0",
-  padding: "18px",
-  borderRadius: "12px",
+  border: "1px solid #e0e7ff",
+  background: "	#F0F8FF",
+  margin: "0 14px 0 0",
+  padding: "22px",
+  borderRadius: "16px",
   width: "32%",
+  fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
 };
 
 const headingStyles = {
-  marginBottom: "20px",
-  fontWeight: "600",
-  fontSize: "1.2rem",
+  marginBottom: "24px",
+  fontWeight: "700",
+  fontSize: "1.4rem",
+  color: "#1e40af",
+  borderBottom: "2px solid #3b82f6",
+  paddingBottom: "8px",
+};
+
+const statusTextStyles = {
+  available: { color: "#16a34a", fontWeight: "600" }, // Emerald Green
+  active: { color: "#0ea5e9", fontWeight: "600" },    // Sky Blue
+  break: { color: "#ca8a04", fontWeight: "600" },     // Amber
+  onbreak: { color: "#ca8a04", fontWeight: "600" },   // Amber
+  ended: { color: "#ef4444", fontWeight: "600" },     // Red-500
+  offline: { color: "#b91c1c", fontWeight: "600" },   // Red-700
+  onleave: { color: "#7c3aed", fontWeight: "600" },   // Violet-600
+};
+
+const inputStyles = {
+  width: "340px",
+  padding: "12px",
+  fontSize: "1.1rem",
+  border: "1.5px solid #cbd5e1",
+  borderRadius: "8px",
+  boxShadow: "0 2px 6px #d1d5db",
+  outline: "none",
+  fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
 };
 
 function Status({ employees }) {
   const [search, setSearch] = useState("");
 
-  // filter on search by name or username
+  // Filter on search by name or username
   const filtered = employees.filter(
-    emp =>
+    (emp) =>
       emp.name.toLowerCase().includes(search.toLowerCase()) ||
       emp.username.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Out if status ended or clock_in_time is null
+  // Categorize employees for UI
   const out = filtered.filter(
-    emp => emp.currentStatus === "ended" || emp.clockInTime === null
+    (emp) => emp.currentStatus === "ended" || emp.clockInTime === null
   );
 
-  // Active if status is active
-  const active = filtered.filter(emp => emp.currentStatus === "active");
+  const active = filtered.filter(
+    (emp) => emp.currentStatus === "active"
+  );
 
-  // On break if status is break or onbreak
   const onBreak = filtered.filter(
-    emp => emp.currentStatus === "break" || emp.currentStatus === "onbreak"
+    (emp) => emp.currentStatus === "break" || emp.currentStatus === "onbreak"
   );
 
   return (
     <div>
-      <div style={{ marginBottom: "24px" }}>
+      <div style={{ marginBottom: "28px" }}>
         <input
           type="text"
           placeholder="Search employee by name or username..."
           value={search}
-          onChange={e => setSearch(e.target.value)}
-          style={{
-            width: "320px",
-            padding: "10px",
-            fontSize: "1rem",
-            border: "1px solid #d1d5db",
-            borderRadius: "6px",
-            boxShadow: "0 1px 4px #eee",
-            outline: "none",
-          }}
+          onChange={(e) => setSearch(e.target.value)}
+          style={inputStyles}
         />
       </div>
-      <div style={{ display: "flex", gap: "20px" }}>
+      <div style={{ display: "flex", gap: "24px" }}>
+        {/* Active Section */}
         <div style={sectionStyles}>
           <div style={headingStyles}>Active</div>
           {active.length === 0 ? (
-            <div>No active employees found.</div>
+            <div style={{ fontStyle: "italic", color: "#64748b" }}>No active employees found.</div>
           ) : (
-            active.map(emp => (
-              <div key={emp.id} style={cardStyles}>
+            active.map((emp) => (
+              <div
+                key={emp.id}
+                style={cardStyles}
+                onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.02)")}
+                onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+              >
                 <div>
-                  <span style={{ fontWeight: "bold" }}>{emp.name}</span>{" "}
-                  <span
-                    style={{
-                      color: "#47cf73",
-                      marginLeft: "8px",
-                      fontWeight: "500",
-                    }}
-                  >
-                    ({emp.currentStatus})
-                  </span>
+                  <span style={{ fontWeight: "700", fontSize: "1.05rem" }}>{emp.name}</span>{" "}
+                  <span style={statusTextStyles[emp.currentStatus] || {}}>{`(${emp.currentStatus})`}</span>
                 </div>
               </div>
             ))
           )}
         </div>
+
+        {/* On Break Section */}
         <div style={sectionStyles}>
           <div style={headingStyles}>On Break</div>
           {onBreak.length === 0 ? (
-            <div>No employees on break.</div>
+            <div style={{ fontStyle: "italic", color: "#64748b" }}>No employees on break.</div>
           ) : (
-            onBreak.map(emp => (
-              <div key={emp.id} style={cardStyles}>
+            onBreak.map((emp) => (
+              <div
+                key={emp.id}
+                style={cardStyles}
+                onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.02)")}
+                onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+              >
                 <div>
-                  <span style={{ fontWeight: "bold" }}>{emp.name}</span>{" "}
-                  <span
-                    style={{
-                      color: "#ffd700",
-                      marginLeft: "8px",
-                      fontWeight: "500",
-                    }}
-                  >
-                    ({emp.currentStatus})
-                  </span>
+                  <span style={{ fontWeight: "700", fontSize: "1.05rem" }}>{emp.name}</span>{" "}
+                  <span style={statusTextStyles[emp.currentStatus] || {}}>{`(${emp.currentStatus})`}</span>
                 </div>
               </div>
             ))
           )}
         </div>
+
+        {/* Out Section */}
         <div style={sectionStyles}>
           <div style={headingStyles}>Out</div>
           {out.length === 0 ? (
-            <div>No employees out.</div>
+            <div style={{ fontStyle: "italic", color: "#64748b" }}>No employees out.</div>
           ) : (
-            out.map(emp => (
-              <div key={emp.id} style={cardStyles}>
+            out.map((emp) => (
+              <div
+                key={emp.id}
+                style={cardStyles}
+                onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.02)")}
+                onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+              >
                 <div>
-                  <span style={{ fontWeight: "bold" }}>{emp.name}</span>{" "}
-                  <span
-                    style={{
-                      color: "#ff4545",
-                      marginLeft: "8px",
-                      fontWeight: "500",
-                    }}
-                  >
-                    ({emp.currentStatus})
-                  </span>
+                  <span style={{ fontWeight: "700", fontSize: "1.05rem" }}>{emp.name}</span>{" "}
+                  <span style={statusTextStyles[emp.currentStatus] || {}}>{`(${emp.currentStatus})`}</span>
                 </div>
               </div>
             ))
