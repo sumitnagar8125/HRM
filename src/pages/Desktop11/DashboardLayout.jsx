@@ -15,16 +15,16 @@ const DashboardLayout = () => {
     if (!token) return;
 
     fetch(`${BACKEND_URL}/users/me`, {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
     })
-      .then(res => res.ok ? res.json() : Promise.reject())
-      .then(user => {
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((user) => {
         setRole(user.role || "employee");
         setUserId(user.employee_id || null);
         return fetch(`${BACKEND_URL}/leaves/`, { headers: { Authorization: `Bearer ${token}` } });
       })
-      .then(res => res.ok ? res.json() : Promise.reject())
-      .then(data => setLeaves(data))
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((data) => setLeaves(data))
       .catch(() => setLeaves([]))
       .finally(() => setLoading(false));
   }, []);
@@ -34,7 +34,7 @@ const DashboardLayout = () => {
   let allApplications = [];
 
   if (role === "admin" || role === "super_admin") {
-    notifications = leaves.filter(lv => lv.status === "pending").map(lv => ({
+    notifications = leaves.filter((lv) => lv.status === "pending").map((lv) => ({
       id: lv.id,
       leaveId: lv.id,
       employee_id: lv.employee_id,
@@ -45,17 +45,27 @@ const DashboardLayout = () => {
       status: lv.status,
     }));
 
-    leaveStatus = userId ? leaves.filter(lv => lv.employee_id === userId).map(lv => ({ ...lv, type: lv.leave_type })) : [];
-    allApplications = leaves.map(lv => ({ ...lv, type: lv.leave_type }));
+    leaveStatus = [];
+    allApplications = leaves.map((lv) => ({ ...lv, type: lv.leave_type }));
   } else {
-    leaveStatus = leaves.map(lv => ({ ...lv, type: lv.leave_type }));
+    // Leave Status: show only with end date >= today
+    const today = new Date().setHours(0, 0, 0, 0);
+    leaveStatus = leaves.filter(lv => {
+      const leaveEndDate = new Date(lv.end_date).setHours(0, 0, 0, 0);
+      return leaveEndDate >= today;
+    }).map(lv => ({ ...lv, type: lv.leave_type }));
+
+    // History: show all leaves
+    allApplications = leaves.map(lv => ({ ...lv, type: lv.leave_type }));
   }
 
   return (
     <div className="flex-1">
-      <Header />
+      <Header role={role} />
       <main className="p-6">
-        {loading ? <p>Loading leave data...</p> : (
+        {loading ? (
+          <p>Loading leave data...</p>
+        ) : (
           <Notification
             notifications={notifications}
             leaveStatus={leaveStatus}
