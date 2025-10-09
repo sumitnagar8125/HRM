@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 
-// Styles
 const cardStyles = {
   background: "#fff",
   borderRadius: "8px",
@@ -32,21 +31,32 @@ const headingStyles = {
 function Status({ employees }) {
   const [search, setSearch] = useState("");
 
-  // Filter by search query
-  const filtered = employees.filter(emp =>
-    emp.name.toLowerCase().includes(search.toLowerCase())
+  // filter on search by name or username
+  const filtered = employees.filter(
+    emp =>
+      emp.name.toLowerCase().includes(search.toLowerCase()) ||
+      emp.username.toLowerCase().includes(search.toLowerCase())
   );
 
-  const active = filtered.filter(emp => emp.status === 'available');
-  const onBreak = filtered.filter(emp => emp.status === 'onbreak');
-  const out = filtered.filter(emp => emp.status === 'offline' || emp.status === 'onleave');
+  // Out if status ended or clock_in_time is null
+  const out = filtered.filter(
+    emp => emp.currentStatus === "ended" || emp.clockInTime === null
+  );
+
+  // Active if status is active
+  const active = filtered.filter(emp => emp.currentStatus === "active");
+
+  // On break if status is break or onbreak
+  const onBreak = filtered.filter(
+    emp => emp.currentStatus === "break" || emp.currentStatus === "onbreak"
+  );
 
   return (
     <div>
       <div style={{ marginBottom: "24px" }}>
         <input
           type="text"
-          placeholder="Search employee by name..."
+          placeholder="Search employee by name or username..."
           value={search}
           onChange={e => setSearch(e.target.value)}
           style={{
@@ -61,50 +71,74 @@ function Status({ employees }) {
         />
       </div>
       <div style={{ display: "flex", gap: "20px" }}>
-        {/* Active Section */}
         <div style={sectionStyles}>
           <div style={headingStyles}>Active</div>
-          {active.length === 0 && <div>No active employees found.</div>}
-          {active.map(emp => (
-            <div key={emp.id} style={cardStyles}>
-              <div>
-                <span style={{ fontWeight: "bold" }}>{emp.name}</span>
-                <span style={{ color: "#47cf73", marginLeft: "8px", fontWeight: "500" }}>({emp.status})</span>
+          {active.length === 0 ? (
+            <div>No active employees found.</div>
+          ) : (
+            active.map(emp => (
+              <div key={emp.id} style={cardStyles}>
+                <div>
+                  <span style={{ fontWeight: "bold" }}>{emp.name}</span>{" "}
+                  <span
+                    style={{
+                      color: "#47cf73",
+                      marginLeft: "8px",
+                      fontWeight: "500",
+                    }}
+                  >
+                    ({emp.currentStatus})
+                  </span>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
-        {/* Break Section */}
         <div style={sectionStyles}>
           <div style={headingStyles}>On Break</div>
-          {onBreak.length === 0 && <div>No employees on break.</div>}
-          {onBreak.map(emp => (
-            <div key={emp.id} style={cardStyles}>
-              <div>
-                <span style={{ fontWeight: "bold" }}>{emp.name}</span>
-                <span style={{ color: "#ffd700", marginLeft: "8px", fontWeight: "500" }}>({emp.status})</span>
+          {onBreak.length === 0 ? (
+            <div>No employees on break.</div>
+          ) : (
+            onBreak.map(emp => (
+              <div key={emp.id} style={cardStyles}>
+                <div>
+                  <span style={{ fontWeight: "bold" }}>{emp.name}</span>{" "}
+                  <span
+                    style={{
+                      color: "#ffd700",
+                      marginLeft: "8px",
+                      fontWeight: "500",
+                    }}
+                  >
+                    ({emp.currentStatus})
+                  </span>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
-        {/* Out Section */}
         <div style={sectionStyles}>
           <div style={headingStyles}>Out</div>
-          {out.length === 0 && <div>No employees out.</div>}
-          {out.map(emp => (
-            <div key={emp.id} style={cardStyles}>
-              <div>
-                <span style={{ fontWeight: "bold" }}>{emp.name}</span>
-                <span style={{
-                  color: emp.status === "offline" ? "#ff4545" : "#8a58db",
-                  marginLeft: "8px",
-                  fontWeight: "500"
-                }}>
-                  ({emp.status})
-                </span>
+          {out.length === 0 ? (
+            <div>No employees out.</div>
+          ) : (
+            out.map(emp => (
+              <div key={emp.id} style={cardStyles}>
+                <div>
+                  <span style={{ fontWeight: "bold" }}>{emp.name}</span>{" "}
+                  <span
+                    style={{
+                      color: "#ff4545",
+                      marginLeft: "8px",
+                      fontWeight: "500",
+                    }}
+                  >
+                    ({emp.currentStatus})
+                  </span>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </div>
