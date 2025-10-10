@@ -11,20 +11,16 @@ export default function DashboardLayout() {
   const [showCreateEmployeeModal, setShowCreateEmployeeModal] = useState(false);
 
   useEffect(() => {
-    const accessToken = localStorage.getItem("token");
-    axios.get("http://127.0.0.1:8000/users/me", {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    })
+  const accessToken = localStorage.getItem("token");
+  axios.get("http://127.0.0.1:8000/users/me", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
     .then(userRes => {
       setUser(userRes.data);
-      if(userRes.data.role === "employee") {
-        return axios.get("http://127.0.0.1:8000/employees/me", {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-      } else {
-        setEmployeeProfile(null);
-        return null;
-      }
+      // Always fetch employee profile for all users present in Employee table
+      return axios.get("http://127.0.0.1:8000/employees/me", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
     })
     .then(empRes => {
       if(empRes) setEmployeeProfile(empRes.data);
@@ -33,7 +29,8 @@ export default function DashboardLayout() {
       setUser(null);
       setEmployeeProfile(null);
     });
-  }, []);
+}, []);
+
 
   // Role helpers
   const isAdmin = user?.role === "admin";
@@ -85,16 +82,18 @@ export default function DashboardLayout() {
         onManageEmployees={handleManageEmployeesClick}
       />
       <Profile
-        user={user.role === "employee" ? employeeProfile : user}
-        isAdmin={isAdmin}
-        isSuperAdmin={isSuperAdmin}
-        onEditProfile={handleEditProfile}
-        onEditImage={handleEditImage}
-        showEmployeeList={showEmployeeList}
-        setShowEmployeeList={setShowEmployeeList}
-        showCreateEmployeeModal={showCreateEmployeeModal}
-        setShowCreateEmployeeModal={setShowCreateEmployeeModal}
-      />
+  user={employeeProfile || user}
+  isAdmin={isAdmin}
+  isSuperAdmin={isSuperAdmin}
+  onEditProfile={handleEditProfile}
+  onEditImage={handleEditImage}
+  showEmployeeList={showEmployeeList}
+  setShowEmployeeList={setShowEmployeeList}
+  showCreateEmployeeModal={showCreateEmployeeModal}
+  setShowCreateEmployeeModal={setShowCreateEmployeeModal}
+/>
+
+
     </>
   );
 }

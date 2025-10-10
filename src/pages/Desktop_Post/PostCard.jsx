@@ -1,5 +1,5 @@
-import React from "react";
-import ReactionBar from "./ReactionBar";
+import React, { useState } from "react";
+import ReactionHoverBar from "./ReactionHoverBar";
 
 export default function PostCard({
   post,
@@ -11,54 +11,80 @@ export default function PostCard({
   actionLoading,
   onClick,
 }) {
+  const [showReactions, setShowReactions] = useState(false);
+
   return (
     <div
+      className="relative rounded-2xl p-6 shadow-md bg-white border mb-6 transition hover:shadow-xl cursor-pointer"
+      onMouseEnter={() => setShowReactions(true)}
+      onMouseLeave={() => setShowReactions(false)}
       onClick={onClick}
-      className="relative rounded-2xl p-6 shadow-md bg-white transition hover:shadow-xl duration-150 cursor-pointer border"
-      style={{ opacity: actionLoading ? 0.60 : 1 }}
+      style={{ opacity: actionLoading ? 0.6 : 1 }}
     >
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          {!post.is_viewed && (
-            <span className="px-3 py-1 bg-pink-100 text-pink-700 text-xs font-semibold rounded-full">New</span>
-          )}
-          <span className="font-bold text-lg">{post.title}</span>
-        </div>
-        {post.is_pinned && (
-          <span className="ml-2 text-2xl text-yellow-400" title="Pinned">📌</span>
-        )}
-      </div>
-      <div className="mt-2 text-gray-700 mb-2">{post.content}</div>
-      
-      {/* WhatsApp style Reactions under post */}
-      <ReactionBar
-  emojis={Object.keys(post.reaction_counts)}
-  reactionCounts={post.reaction_counts}
-  userReactions={post.user_reactions}
-  postId={post.id}
-  onToggleReaction={allowReact ? onToggleReaction : () => {}}
-  allowCustomReaction={allowReact}
-/>
+      <header className="flex justify-between items-center">
+        <h3 className="font-bold text-lg">{post.title}</h3>
+        {post.is_pinned && <span title="Pinned" className="text-yellow-400 text-2xl">📌</span>}
+      </header>
+      <article className="my-3 text-gray-700">{post.content}</article>
 
+      <section className="flex gap-2 flex-wrap mb-1">
+        {Object.entries(post.reaction_counts || {}).map(([emoji, count]) => (
+          <button
+            key={emoji}
+            type="button"
+            className={`flex items-center gap-1 px-2 py-1 rounded-full font-medium text-yellow-900 border border-yellow-400 bg-yellow-200 text-base
+              ${post.user_reactions?.includes(emoji) ? "ring-2 ring-blue-400" : ""}
+            `}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleReaction(post.id, emoji);
+            }}
+            title={`React with ${emoji}`}
+          >
+            <span>{emoji}</span>
+            <span>{count}</span>
+          </button>
+        ))}
+      </section>
 
       {isAdmin && (
-        <div className="flex justify-end gap-3 mt-3">
+        <footer className="flex justify-end gap-3 mt-3 select-none">
           <button
-            className={`px-4 py-2 rounded-full font-medium transition shadow-lg
-              ${post.is_pinned ? "bg-yellow-300 hover:bg-yellow-400 text-yellow-900" : "bg-gray-200 hover:bg-yellow-100 text-gray-900"}
-            `}
-            onClick={e => { e.stopPropagation(); onPin(post.id); }}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onPin(post.id);
+            }}
             disabled={actionLoading}
+            className={`px-4 py-2 rounded-full font-medium shadow-lg transition ${
+              post.is_pinned ? "bg-yellow-300 hover:bg-yellow-400 text-yellow-900" : "bg-gray-200 hover:bg-yellow-100 text-gray-900"
+            }`}
           >
             {post.is_pinned ? "Unpin" : "Pin"}
           </button>
+
           <button
-            className="px-4 py-2 rounded-full bg-red-100 hover:bg-red-300 text-red-700 font-medium transition shadow-lg"
-            onClick={e => { e.stopPropagation(); onDelete(post.id); }}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(post.id);
+            }}
             disabled={actionLoading}
+            className="px-4 py-2 rounded-full bg-red-100 hover:bg-red-300 text-red-700 font-medium shadow-lg transition"
           >
             Delete
           </button>
+        </footer>
+      )}
+
+      {showReactions && allowReact && (
+        <div
+          className="absolute -top-12 left-6 w-[95%] z-30"
+          onMouseEnter={() => setShowReactions(true)}
+          onMouseLeave={() => setShowReactions(false)}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <ReactionHoverBar onReact={(emoji) => onToggleReaction(post.id, emoji)} />
         </div>
       )}
     </div>

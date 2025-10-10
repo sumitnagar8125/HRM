@@ -3,22 +3,22 @@ import Image from "next/image";
 
 const Avatar = ({ src, onClick, editable }) => (
   <div
-    className={`rounded-full overflow-hidden w-16 h-16 bg-gray-200 flex items-center justify-center mr-4 relative ${
+    className={`rounded-full overflow-hidden w-20 h-20 bg-gray-200 flex items-center justify-center ${
       editable ? "cursor-pointer hover:ring-2 hover:ring-blue-400" : ""
-    }`}
+    } relative mb-4`}
     onClick={editable && onClick ? onClick : undefined}
     title={editable ? "Click to change photo" : ""}
   >
     <Image
       src={src && src !== "" ? src : "/logo.png"}
-      width={64}
-      height={64}
+      width={80}
+      height={80}
       alt="Avatar"
       style={{ objectFit: "cover" }}
     />
     {editable && (
       <span
-        className="absolute bottom-0 right-0 bg-white p-1 rounded-full shadow"
+        className="absolute bottom-1 right-1 bg-white p-1 rounded-full shadow"
         style={{ fontSize: 12 }}
       >
         <svg width="18" height="18" fill="#2563eb" xmlns="http://www.w3.org/2000/svg">
@@ -48,7 +48,6 @@ export default function Profile({
     password: "",
     role: "employee",
     name: "",
-    user_id: "",
     email: "",
     phone: "",
     avatar_url: "",
@@ -80,9 +79,8 @@ export default function Profile({
   }, [showEmployeeList, isAdmin, isSuperAdmin]);
 
   const handleAvatarClick = () => {
-    if (fileInputRef.current) {
+    if (fileInputRef.current)
       fileInputRef.current.click();
-    }
   };
 
   const updateAvatarOnServer = async (base64Image) => {
@@ -108,7 +106,7 @@ export default function Profile({
       alert("Profile picture updated successfully.");
       setForm((f) => ({ ...f, avatar_url: base64Image }));
       if (onEditImage) onEditImage(base64Image);
-    } catch (error) {
+    } catch {
       alert("Network error while updating avatar.");
     }
   };
@@ -124,7 +122,6 @@ export default function Profile({
     reader.readAsDataURL(file);
   };
 
-  // Fetch employees (admin/super_admin only)
   const fetchEmployees = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -220,16 +217,11 @@ export default function Profile({
     setEditingEmployee(null);
   };
 
-  // Create Employee - use new admin API and admin-provided user_id
   const handleCreateEmployee = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem("token");
     if (!token) {
       alert("Please log in");
-      return;
-    }
-    if (!newEmployee.user_id) {
-      alert("User ID is required");
       return;
     }
     try {
@@ -244,7 +236,7 @@ export default function Profile({
       };
       const employee_data = {
         name: newEmployee.name || newEmployee.username,
-        user_id: newEmployee.user_id,
+        user_id: 0,
         email: newEmployee.email,
         phone: newEmployee.phone,
         avatar_url: newEmployee.avatar_url,
@@ -271,13 +263,20 @@ export default function Profile({
     }
   };
 
-  // Core render logic
   return (
     <>
       {showEmployeeList && (isAdmin || isSuperAdmin) && !editMode ? (
         <div className="flex justify-center items-start min-h-full">
-          <div className="w-full max-w-2xl mx-auto rounded-xl mt-12 bg-white shadow-md">
-            <h2 className="font-bold text-xl mb-4 text-center">All Employees</h2>
+          <div className="w-full max-w-2xl mx-auto rounded-xl mt-12 bg-white shadow-md relative">
+            <div className="flex items-center justify-between px-6 pt-6">
+              <h2 className="font-bold text-xl text-blue-800">All Employees</h2>
+              <button
+                className="bg-blue-600 text-white font-semibold rounded px-4 py-2 shadow hover:bg-blue-700 transition"
+                onClick={() => setShowCreateEmployeeModal(true)}
+              >
+                + Create Employee
+              </button>
+            </div>
             <div
               style={{
                 maxHeight: "60vh",
@@ -285,6 +284,7 @@ export default function Profile({
                 borderRadius: "1rem",
                 border: "1px solid #e5e7eb",
               }}
+              className="mt-3"
             >
               {employeeList.length ? (
                 employeeList.map((emp) => (
@@ -408,19 +408,6 @@ export default function Profile({
                       </select>
                     </div>
                     <div>
-                      <label className="block text-gray-700 mb-1 font-medium">User ID</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="User ID"
-                        value={newEmployee.user_id}
-                        onChange={(e) =>
-                          setNewEmployee({ ...newEmployee, user_id: e.target.value })
-                        }
-                        className="w-full p-2 border rounded focus:outline-none focus:ring focus:border-blue-400"
-                      />
-                    </div>
-                    <div>
                       <label className="block text-gray-700 mb-1 font-medium">Name</label>
                       <input
                         type="text"
@@ -471,13 +458,15 @@ export default function Profile({
                     </div>
                   </div>
                   <div className="flex justify-end gap-3 pt-4">
-                    <button type="button"
+                    <button
+                      type="button"
                       className="bg-gray-300 text-gray-700 px-5 py-2 rounded hover:bg-gray-400 transition"
                       onClick={() => setShowCreateEmployeeModal(false)}
                     >
                       Cancel
                     </button>
-                    <button type="submit"
+                    <button
+                      type="submit"
                       className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition font-semibold"
                     >
                       Create
@@ -489,7 +478,7 @@ export default function Profile({
           )}
           {!showCreateEmployeeModal && !showEmployeeList && !editMode && (
             <div className="flex flex-col items-center justify-center mt-16">
-              <div className="bg-white rounded-xl shadow max-w-2xl w-full p-6 space-y-6">
+              <div className="bg-blue-50 border border-blue-100 rounded-2xl shadow-lg max-w-lg w-full px-8 py-8 flex flex-col items-center">
                 <Avatar
                   src={form.avatar_url}
                   onClick={handleAvatarClick}
@@ -502,22 +491,14 @@ export default function Profile({
                   className="hidden"
                   onChange={handleFileChange}
                 />
-                <div>
-                  <p><strong>Name:</strong> {form.name}</p>
-                  <p><strong>Employee ID:</strong> {form.emp_code}</p>
-                  <p><strong>Email:</strong> {form.email}</p>
-                  <p><strong>Phone:</strong> {form.phone}</p>
+                <div className="mt-4 text-center space-y-1 w-full">
+                  <h2 className="text-xl font-bold text-blue-800 mb-1">{form.name}</h2>
+                  <div className="text-gray-700"><b>Employee ID:</b> <span className="font-medium">{form.emp_code}</span></div>
+                  <div className="text-gray-700"><b>Email:</b> <span className="font-medium">{form.email}</span></div>
+                  <div className="text-gray-700"><b>Phone:</b> <span className="font-medium">{form.phone}</span></div>
                 </div>
-                {(isAdmin || isSuperAdmin) && (
-                  <button
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-                    onClick={() => setShowCreateEmployeeModal(true)}
-                  >
-                    Create Employee
-                  </button>
-                )}
                 <button
-                  className="bg-blue-600 text-white py-2 rounded w-full"
+                  className="w-full bg-blue-600 mt-7 text-white py-2 rounded-lg font-semibold shadow hover:bg-blue-700 transition"
                   onClick={() => setEditMode(true)}
                 >
                   Edit Profile

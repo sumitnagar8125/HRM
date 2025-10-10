@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import ReactionBar from "./ReactionBar";
+import ReactionHoverBar from "./ReactionHoverBar";
 
 const BACKEND_URL = "http://127.0.0.1:8000";
 
 export default function PostDetailModal({ postId, onClose, onToggleReaction, onMarkViewed, role }) {
   const [post, setPost] = useState(null);
+  const [showReactions, setShowReactions] = useState(false);
 
   const getAuthHeaders = () => ({
     Authorization: "Bearer " + (localStorage.getItem("token") || "")
@@ -34,16 +35,29 @@ export default function PostDetailModal({ postId, onClose, onToggleReaction, onM
           <div className="text-lg font-bold">{post.title}</div>
           {post.is_pinned && <span className="text-2xl text-yellow-400" title="Pinned">📌</span>}
         </div>
-        <div className="text-gray-700 mb-6">{post.content}</div>
-        <ReactionBar
-  emojis={Object.keys(post.reaction_counts)}
-  reactionCounts={post.reaction_counts}
-  userReactions={post.user_reactions}
-  postId={post.id}
-  onToggleReaction={onToggleReaction || (() => {})}
-  allowCustomReaction={true}
-/>
-
+        <div 
+          className="text-gray-700 mb-6"
+          onMouseEnter={() => setShowReactions(true)}
+          onMouseLeave={() => setShowReactions(false)}
+        >{post.content}</div>
+        <div className="flex gap-2 mb-1">
+          {Object.entries(post.reaction_counts || {}).map(([emoji, count]) => (
+            <button
+              key={emoji}
+              className={`
+                px-2 py-1 rounded-full font-medium bg-yellow-200 border border-yellow-400 text-yellow-900 flex items-center gap-1 text-base
+                ${post.user_reactions?.includes(emoji) ? "ring-2 ring-blue-400" : ""}
+              `}
+              onClick={e => { e.stopPropagation(); onToggleReaction(post.id, emoji); }}
+            >
+              <span>{emoji}</span>
+              <span>{count}</span>
+            </button>
+          ))}
+        </div>
+        {showReactions && (
+          <ReactionHoverBar onReact={emoji => onToggleReaction(post.id, emoji)} />
+        )}
         <div className="text-xs text-gray-500 mt-6">By {post.author_name} | {post.created_at}</div>
       </div>
     </div>
