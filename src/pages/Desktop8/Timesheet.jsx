@@ -17,7 +17,6 @@ export default function Timesheet({ logs }) {
           </span>
         )}
       </div>
-
       {logs.length > 0 ? (
         <ul className="space-y-4">
           {logs.map(({ id, clock_in_time, clock_out_time, work_duration, break_duration, status, shift_info }) => (
@@ -30,7 +29,6 @@ export default function Timesheet({ logs }) {
                     <div className="text-lg">{clock_in_time}</div>
                   </div>
                 </div>
-
                 <div className="flex items-center gap-2">
                   <Clock className="text-red-500" />
                   <div>
@@ -38,7 +36,6 @@ export default function Timesheet({ logs }) {
                     <div className="text-lg">{clock_out_time}</div>
                   </div>
                 </div>
-
                 <div className="flex items-center gap-2">
                   <Clock className="text-green-500" />
                   <div>
@@ -46,7 +43,6 @@ export default function Timesheet({ logs }) {
                     <div className="text-lg">{work_duration}</div>
                   </div>
                 </div>
-
                 <div className="flex items-center gap-2">
                   <Coffee className="text-yellow-600" />
                   <div>
@@ -54,7 +50,6 @@ export default function Timesheet({ logs }) {
                     <div className="text-lg">{break_duration}</div>
                   </div>
                 </div>
-
                 <div className="flex items-center gap-2">
                   <CheckCircle className="text-purple-600" />
                   <div>
@@ -62,7 +57,6 @@ export default function Timesheet({ logs }) {
                     <div className="text-lg">{status}</div>
                   </div>
                 </div>
-
                 <div className="flex items-center gap-2">
                   <Info className="text-gray-600" />
                   <div>

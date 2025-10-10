@@ -9,7 +9,6 @@ import Timesheet from "./Timesheet";
 import TimeCards from "./TimeCards";
 import { Clock, Coffee, BarChart3 } from "lucide-react";
 
-// Helper: format seconds to "xh ym"
 function secondsToHMS(seconds) {
   if (typeof seconds !== "number") return "-";
   const h = Math.floor(seconds / 3600);
@@ -17,19 +16,6 @@ function secondsToHMS(seconds) {
   return `${h}h ${m}m`;
 }
 
-// Helper: for time string "YYYY-MM-DD HH:mm:ss" => "H:MM AM/PM"
-function formatTime(dtStr) {
-  if (!dtStr) return "-";
-  const [, time] = dtStr.split(" ");
-  if (!time) return "-";
-  const [h, m] = time.split(":");
-  let hour = Number(h);
-  const period = hour >= 12 ? "PM" : "AM";
-  hour = hour % 12 || 12;
-  return `${hour}:${m} ${period}`;
-}
-
-// Duration parser for UI cards
 function parseDuration(durationStr, secondsField) {
   if (durationStr && typeof durationStr === "string") {
     const hourMatch = durationStr.match(/(\d+)h/);
@@ -44,15 +30,18 @@ function parseDuration(durationStr, secondsField) {
   return 0;
 }
 
-function AdminDashboard({ token }) {
-  const [employees, setEmployees] = useState([]);
+function AdminDashboard({ token, currentUsername, role }) {
+  // viewMode controls which timesheet data to load and show
+  const [viewMode, setViewMode] = useState("admin"); // "admin" or "employee"
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
+  const [employees, setEmployees] = useState([]);
   const [employeeLogs, setEmployeeLogs] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [error, setError] = useState(null);
-  const [loadingLogs, setLoadingLogs] = useState(false);
   const [maxPastDays, setMaxPastDays] = useState(14);
+  const [loadingLogs, setLoadingLogs] = useState(false);
+  const [error, setError] = useState(null);
 
+  // Load employees list once
   useEffect(() => {
     if (!token) return;
     axios
@@ -63,41 +52,49 @@ function AdminDashboard({ token }) {
       .catch(() => setError("Failed to load employees"));
   }, [token]);
 
-  // Map API fields for admin employee timesheet
+  // Load admin timesheet only when viewMode is "admin"
   useEffect(() => {
-    if (!selectedEmployeeId) {
-      setEmployeeLogs([]);
-      return;
-    }
+    if (!token || viewMode !== "admin") return;
     setLoadingLogs(true);
     axios
-      .get(
-        `http://127.0.0.1:8000/attendance-rt/admin/employee/${selectedEmployeeId}/recent?days=${maxPastDays}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
+      .get(`http://127.0.0.1:8000/attendance-rt/timesheet?days=${maxPastDays}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
       .then((res) => {
-        const logs = Array.isArray(res.data) ? res.data : [];
-        setEmployeeLogs(
-          logs.map((log, idx) => ({
-            id: idx,
-            full_date: log.date,
-            clock_in_time: formatTime(log.first_clock_in),
-            clock_out_time: formatTime(log.last_clock_out),
-            work_duration: secondsToHMS(log.total_work_seconds),
-            break_duration: secondsToHMS(log.total_break_seconds),
-            status:
-              log.ot_sec > 0
-                ? "OT"
-                : log.total_work_seconds >= 8 * 3600
-                ? "ON TIME"
-                : "PARTIAL",
-            shift_info: `Shift - ${formatTime(log.first_clock_in)} - ${formatTime(
-              log.last_clock_out
-            )}`,
-            total_work_seconds: log.total_work_seconds,
-            total_break_seconds: log.total_break_seconds,
-          }))
-        );
+        setEmployeeLogs(Array.isArray(res.data) ? res.data.map((log, idx) => ({ ...log, id: log.id || idx })) : []);
+        setError(null);
+        setLoadingLogs(false);
+      })
+      .catch(() => {
+        setError("Failed to fetch your timesheet");
+        setLoadingLogs(false);
+      });
+    // Reset dropdown selection when admin view
+    setSelectedEmployeeId("");
+  }, [token, maxPastDays, viewMode]);
+
+  // Load selected employee timesheet only when viewMode is "employee"
+  useEffect(() => {
+    if (!token || viewMode !== "employee" || !selectedEmployeeId) return;
+    setLoadingLogs(true);
+    axios
+      .get(`http://127.0.0.1:8000/attendance-rt/admin/employee/${selectedEmployeeId}/recent?days=${maxPastDays}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => {
+        const mappedLogs = Array.isArray(res.data)
+          ? res.data.map((log, idx) => ({
+              id: log.id || idx,
+              full_date: log.date,
+              clock_in_time: log.first_clock_in?.split(" ")[1] || "-",
+              clock_out_time: log.last_clock_out?.split(" ")[1] || "-",
+              work_duration: secondsToHMS(log.total_work_seconds),
+              break_duration: secondsToHMS(log.total_break_seconds),
+              status: log.ot_sec > 0 ? "OT" : log.total_work_seconds >= 8 * 3600 ? "ON TIME" : "PARTIAL",
+              shift_info: `Shift - ${log.first_clock_in?.split(" ")[1] || '-'} - ${log.last_clock_out?.split(" ")[1] || '-'}`,
+            }))
+          : [];
+        setEmployeeLogs(mappedLogs);
         setError(null);
         setLoadingLogs(false);
       })
@@ -105,7 +102,18 @@ function AdminDashboard({ token }) {
         setError("Failed to fetch timesheet for employee");
         setLoadingLogs(false);
       });
-  }, [selectedEmployeeId, token, maxPastDays]);
+  }, [selectedEmployeeId, token, maxPastDays, viewMode]);
+
+  const handleEmployeeChange = (e) => {
+    const val = e.target.value;
+    if (val === "") {
+      setViewMode("admin");
+      setSelectedEmployeeId("");
+    } else {
+      setViewMode("employee");
+      setSelectedEmployeeId(val);
+    }
+  };
 
   const formattedKey = format(selectedDate, "yyyy-MM-dd");
   const logs = employeeLogs.filter((log) => log.full_date === formattedKey);
@@ -121,53 +129,36 @@ function AdminDashboard({ token }) {
   const overtime = trackedHours > 8 ? trackedHours - 8 : 0;
 
   const cardsData = [
-    {
-      title: "Tracked Hours",
-      value: `${trackedHours.toFixed(1)}h`,
-      icon: <Clock size={18} />,
-      color: "text-blue-600",
-    },
-    {
-      title: "Break Time",
-      value: `${breakTime.toFixed(1)}h`,
-      icon: <Coffee size={18} />,
-      color: "text-green-600",
-    },
-    {
-      title: "Overtime",
-      value: `${overtime.toFixed(1)}h`,
-      icon: <BarChart3 size={18} />,
-      color: "text-yellow-600",
-    },
+    { title: "Tracked Hours", value: `${trackedHours.toFixed(1)}h`, icon: <Clock size={18} />, color: "text-blue-600" },
+    { title: "Break Time", value: `${breakTime.toFixed(1)}h`, icon: <Coffee size={18} />, color: "text-green-600" },
+    { title: "Overtime", value: `${overtime.toFixed(1)}h`, icon: <BarChart3 size={18} />, color: "text-yellow-600" },
   ];
 
   return (
     <div className="flex flex-col h-full">
       <Header />
       <main className="flex-1 overflow-y-auto p-4 space-y-6">
-        {error && (
-          <div className="bg-red-100 text-red-700 px-4 py-2 rounded mb-4">
-            {error}
-          </div>
-        )}
+        {error && <div className="bg-red-100 text-red-700 px-4 py-2 rounded mb-4">{error}</div>}
         <div className="mb-4 flex flex-row gap-4 items-center">
           <label>Select Employee: </label>
           <select
             value={selectedEmployeeId}
-            onChange={e => setSelectedEmployeeId(e.target.value)}
+            onChange={handleEmployeeChange}
             className="ml-2 p-2 rounded border"
           >
-            <option value="">-- Select Employee --</option>
-            {employees.map(emp => (
-              <option value={emp.employee_id} key={emp.employee_id}>
-                {emp.employee_name} ({emp.username})
-              </option>
-            ))}
+            <option value="">-- Show My Timesheet --</option>
+            {employees
+              .filter((emp) => !((role === "admin" || role === "superadmin") && emp.username === currentUsername))
+              .map((emp) => (
+                <option key={emp.employee_id} value={emp.employee_id}>
+                  {emp.employee_name} ({emp.username})
+                </option>
+              ))}
           </select>
           <span>History:</span>
           <select
             value={maxPastDays}
-            onChange={e => setMaxPastDays(Number(e.target.value))}
+            onChange={(e) => setMaxPastDays(Number(e.target.value))}
             className="p-2 rounded border"
           >
             <option value={14}>14 days</option>
@@ -177,19 +168,10 @@ function AdminDashboard({ token }) {
           </select>
         </div>
         <section className="bg-white shadow rounded-xl p-4">
-          <Calenderui
-            selectedDate={selectedDate}
-            setSelectedDate={setSelectedDate}
-            role="admin"
-            maxPastDays={maxPastDays}
-          />
+          <Calenderui selectedDate={selectedDate} setSelectedDate={setSelectedDate} role="admin" maxPastDays={maxPastDays} />
         </section>
         <section className="bg-white shadow rounded-xl p-4">
-          {loadingLogs ? (
-            <div>Loading timesheet...</div>
-          ) : (
-            <Timesheet logs={logs} />
-          )}
+          {loadingLogs ? <div>Loading timesheet...</div> : <Timesheet logs={logs} />}
         </section>
         <TimeCards data={cardsData} />
       </main>
@@ -229,40 +211,18 @@ function EmployeeDashboard({ token }) {
   const overtime = trackedHours > 8 ? trackedHours - 8 : 0;
 
   const cardsData = [
-    {
-      title: "Tracked Hours",
-      value: `${trackedHours.toFixed(1)}h`,
-      icon: <Clock size={18} />,
-      color: "text-blue-600",
-    },
-    {
-      title: "Break Time",
-      value: `${breakTime.toFixed(1)}h`,
-      icon: <Coffee size={18} />,
-      color: "text-green-600",
-    },
-    {
-      title: "Overtime",
-      value: `${overtime.toFixed(1)}h`,
-      icon: <BarChart3 size={18} />,
-      color: "text-yellow-600",
-    },
+    { title: "Tracked Hours", value: `${trackedHours.toFixed(1)}h`, icon: <Clock size={18} />, color: "text-blue-600" },
+    { title: "Break Time", value: `${breakTime.toFixed(1)}h`, icon: <Coffee size={18} />, color: "text-green-600" },
+    { title: "Overtime", value: `${overtime.toFixed(1)}h`, icon: <BarChart3 size={18} />, color: "text-yellow-600" },
   ];
 
   return (
     <div className="flex flex-col h-full">
       <Header />
       <main className="flex-1 overflow-y-auto p-4 space-y-6">
-        {error && (
-          <div className="bg-red-100 text-red-700 px-4 py-2 rounded mb-4">{error}</div>
-        )}
+        {error && <div className="bg-red-100 text-red-700 px-4 py-2 rounded mb-4">{error}</div>}
         <section className="bg-white shadow rounded-xl p-4">
-          <Calenderui
-            selectedDate={selectedDate}
-            setSelectedDate={setSelectedDate}
-            role="employee"
-            maxPastDays={14}
-          />
+          <Calenderui selectedDate={selectedDate} setSelectedDate={setSelectedDate} role="employee" maxPastDays={14} />
         </section>
         <section className="bg-white shadow rounded-xl p-4">
           <Timesheet logs={logs} />
@@ -275,6 +235,7 @@ function EmployeeDashboard({ token }) {
 
 export default function DashboardLayout() {
   const [role, setRole] = useState(null);
+  const [currentUsername, setCurrentUsername] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -288,18 +249,19 @@ export default function DashboardLayout() {
       .get("http://127.0.0.1:8000/users/me", { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => {
         setRole(res.data.role);
+        setCurrentUsername(res.data.username);
         setLoading(false);
       })
       .catch(() => {
         setRole(null);
+        setCurrentUsername("");
         setLoading(false);
       });
   }, []);
 
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-
   if (loading) return <div>Loading...</div>;
-  if (role === "admin") return <AdminDashboard token={token} />;
+  if (role === "admin" || role === "super_admin") return <AdminDashboard token={token} currentUsername={currentUsername} role={role} />;
   if (role === "employee") return <EmployeeDashboard token={token} />;
   return <div>User role missing or not recognized</div>;
 }
