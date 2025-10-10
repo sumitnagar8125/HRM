@@ -17,39 +17,14 @@ const Avatar = ({ src, onClick, editable }) => (
       style={{ objectFit: "cover" }}
     />
     {editable && (
-      <>
-        <span
-          className="absolute bottom-0 right-0 bg-white p-1 rounded-full shadow"
-          style={{ fontSize: 12 }}
-        >
-          <svg
-            width="18"
-            height="18"
-            fill="#2563eb"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path d="M12 2C13.1046 2 14 2.89543 14 4V5H17C18.1046 5 19 5.89543 19 7V18C19 19.1046 18.1046 20 17 20H7C5.89543 20 5 19.1046 5 18V7C5 5.89543 5.89543 5 7 5ZM7 7V18H17V7H15V9H9V7H7ZM10 7V5H14V7H10Z" />
-          </svg>
-        </span>
-        <span
-          className="absolute bottom-0 right-0 w-6 h-6 bg-gray-700 bg-opacity-70 rounded-full flex items-center justify-center cursor-pointer"
-          style={{ transform: "translate(30%, 30%)" }}
-          onClick={onClick}
-          title="Change Profile"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="white"
-            viewBox="0 0 24 24"
-            width={16}
-            height={16}
-          >
-            <path d="M5 7h14v14H5z" opacity=".3" />
-            <path d="M20 5h-3.586l-1.707-1.707A.996.996 0 0014 3H10c-.265 0-.52.105-.707.293L7.586 5H4c-1.1046 0-2 .8954-2 2v12c0 1.1046.8954 2 2 2h16c1.1046 0 2-.8954 2-2V7c0-1.1046-.8954-2-2-2zM20 19H4V7h4.414l1.293-1.293.293-.293h4.586l.293.293L15.586 7H20v12zM12 10c-1.654 0-3 1.346-3 3s1.346 3 3 3 3-1.346 3-3-1.346-3-3-3z" />
-            <circle cx="12" cy="13" r="1.5" />
-          </svg>
-        </span>
-      </>
+      <span
+        className="absolute bottom-0 right-0 bg-white p-1 rounded-full shadow"
+        style={{ fontSize: 12 }}
+      >
+        <svg width="18" height="18" fill="#2563eb" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2C13.1046 2 14 2.89543 14 4V5H17C18.1046 5 19 5.89543 19 7V18C19 19.1046 18.1046 20 17 20H7C5.89543 20 5 19.1046 5 18V7C5 5.89543 5.89543 5 7 5ZM7 7V18H17V7H15V9H9V7H7ZM10 7V5H14V7H10Z" />
+        </svg>
+      </span>
     )}
   </div>
 );
@@ -57,13 +32,13 @@ const Avatar = ({ src, onClick, editable }) => (
 export default function Profile({
   user,
   isAdmin,
-  isPureAdmin,
+  isSuperAdmin,
   onEditProfile,
   onEditImage,
   showEmployeeList,
   setShowEmployeeList,
   showCreateEmployeeModal,
-  setShowCreateEmployeeModal,
+  setShowCreateEmployeeModal
 }) {
   const [editMode, setEditMode] = useState(false);
   const [employeeList, setEmployeeList] = useState([]);
@@ -72,6 +47,8 @@ export default function Profile({
     username: "",
     password: "",
     role: "employee",
+    name: "",
+    user_id: "",
     email: "",
     phone: "",
     avatar_url: "",
@@ -99,8 +76,8 @@ export default function Profile({
   }, [user]);
 
   useEffect(() => {
-    if (showEmployeeList) fetchEmployees();
-  }, [showEmployeeList]);
+    if (showEmployeeList && (isAdmin || isSuperAdmin)) fetchEmployees();
+  }, [showEmployeeList, isAdmin, isSuperAdmin]);
 
   const handleAvatarClick = () => {
     if (fileInputRef.current) {
@@ -147,6 +124,7 @@ export default function Profile({
     reader.readAsDataURL(file);
   };
 
+  // Fetch employees (admin/super_admin only)
   const fetchEmployees = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -242,9 +220,61 @@ export default function Profile({
     setEditingEmployee(null);
   };
 
+  // Create Employee - use new admin API and admin-provided user_id
+  const handleCreateEmployee = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Please log in");
+      return;
+    }
+    if (!newEmployee.user_id) {
+      alert("User ID is required");
+      return;
+    }
+    try {
+      const user_data = {
+        username: newEmployee.username,
+        password: newEmployee.password,
+        role: newEmployee.role,
+        email: newEmployee.email,
+        phone: newEmployee.phone,
+        avatar_url: newEmployee.avatar_url,
+        emp_code: newEmployee.emp_code,
+      };
+      const employee_data = {
+        name: newEmployee.name || newEmployee.username,
+        user_id: newEmployee.user_id,
+        email: newEmployee.email,
+        phone: newEmployee.phone,
+        avatar_url: newEmployee.avatar_url,
+        emp_code: newEmployee.emp_code,
+      };
+      const res = await fetch("http://127.0.0.1:8000/admin/create-user-employee", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ user_data, employee_data }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        alert("Error: " + (data.detail || "Unknown error"));
+        return;
+      }
+      alert("Employee created");
+      setShowCreateEmployeeModal(false);
+      fetchEmployees();
+    } catch {
+      alert("Network error");
+    }
+  };
+
+  // Core render logic
   return (
     <>
-      {showEmployeeList && isPureAdmin && !editMode ? (
+      {showEmployeeList && (isAdmin || isSuperAdmin) && !editMode ? (
         <div className="flex justify-center items-start min-h-full">
           <div className="w-full max-w-2xl mx-auto rounded-xl mt-12 bg-white shadow-md">
             <h2 className="font-bold text-xl mb-4 text-center">All Employees</h2>
@@ -320,17 +350,10 @@ export default function Profile({
               </div>
             ))}
             <div className="flex gap-2">
-              <button
-                type="submit"
-                className="bg-blue-600 w-full py-2 rounded text-white"
-              >
+              <button type="submit" className="bg-blue-600 w-full py-2 rounded text-white">
                 Save changes
               </button>
-              <button
-                type="button"
-                className="border w-full py-2 rounded"
-                onClick={cancelEdit}
-              >
+              <button type="button" className="border w-full py-2 rounded" onClick={cancelEdit}>
                 Cancel
               </button>
             </div>
@@ -338,42 +361,14 @@ export default function Profile({
         </div>
       ) : (
         <>
-          {showCreateEmployeeModal && (
+          {showCreateEmployeeModal && (isAdmin || isSuperAdmin) && (
             <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
               <div className="bg-white p-8 rounded-xl shadow-2xl max-w-lg w-full">
                 <h2 className="text-2xl font-bold mb-6 text-center text-blue-700">Create Employee</h2>
-                <form
-                  onSubmit={async (e) => {
-                    e.preventDefault();
-                    const token = localStorage.getItem("token");
-                    try {
-                      const res = await fetch("http://127.0.0.1:8000/register", {
-                        method: "POST",
-                        headers: {
-                          "Content-Type": "application/json",
-                          Authorization: `Bearer ${token}`,
-                        },
-                        body: JSON.stringify(newEmployee),
-                      });
-                      if (!res.ok) {
-                        const data = await res.json();
-                        alert("Error: " + (data.detail || "Unknown error"));
-                        return;
-                      }
-                      alert("Employee created");
-                      setShowCreateEmployeeModal(false);
-                      fetchEmployees();
-                    } catch {
-                      alert("Network error");
-                    }
-                  }}
-                  className="space-y-4"
-                >
+                <form onSubmit={handleCreateEmployee} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-gray-700 mb-1 font-medium">
-                        Username
-                      </label>
+                      <label className="block text-gray-700 mb-1 font-medium">Username</label>
                       <input
                         type="text"
                         required
@@ -386,9 +381,7 @@ export default function Profile({
                       />
                     </div>
                     <div>
-                      <label className="block text-gray-700 mb-1 font-medium">
-                        Password
-                      </label>
+                      <label className="block text-gray-700 mb-1 font-medium">Password</label>
                       <input
                         type="password"
                         required
@@ -396,6 +389,46 @@ export default function Profile({
                         value={newEmployee.password}
                         onChange={(e) =>
                           setNewEmployee({ ...newEmployee, password: e.target.value })
+                        }
+                        className="w-full p-2 border rounded focus:outline-none focus:ring focus:border-blue-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-gray-700 mb-1 font-medium">Role</label>
+                      <select
+                        required
+                        value={newEmployee.role}
+                        onChange={(e) =>
+                          setNewEmployee({ ...newEmployee, role: e.target.value })
+                        }
+                        className="w-full p-2 border rounded focus:outline-none focus:ring focus:border-blue-400"
+                      >
+                        <option value="employee">Employee</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-gray-700 mb-1 font-medium">User ID</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="User ID"
+                        value={newEmployee.user_id}
+                        onChange={(e) =>
+                          setNewEmployee({ ...newEmployee, user_id: e.target.value })
+                        }
+                        className="w-full p-2 border rounded focus:outline-none focus:ring focus:border-blue-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-gray-700 mb-1 font-medium">Name</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Name"
+                        value={newEmployee.name}
+                        onChange={(e) =>
+                          setNewEmployee({ ...newEmployee, name: e.target.value })
                         }
                         className="w-full p-2 border rounded focus:outline-none focus:ring focus:border-blue-400"
                       />
@@ -425,9 +458,7 @@ export default function Profile({
                       />
                     </div>
                     <div>
-                      <label className="block text-gray-700 mb-1 font-medium">
-                        Employee Code
-                      </label>
+                      <label className="block text-gray-700 mb-1 font-medium">Employee Code</label>
                       <input
                         type="text"
                         placeholder="Employee Code"
@@ -440,15 +471,13 @@ export default function Profile({
                     </div>
                   </div>
                   <div className="flex justify-end gap-3 pt-4">
-                    <button
-                      type="button"
+                    <button type="button"
                       className="bg-gray-300 text-gray-700 px-5 py-2 rounded hover:bg-gray-400 transition"
                       onClick={() => setShowCreateEmployeeModal(false)}
                     >
                       Cancel
                     </button>
-                    <button
-                      type="submit"
+                    <button type="submit"
                       className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition font-semibold"
                     >
                       Create
@@ -474,20 +503,12 @@ export default function Profile({
                   onChange={handleFileChange}
                 />
                 <div>
-                  <p>
-                    <strong>Name:</strong> {form.name}
-                  </p>
-                  <p>
-                    <strong>Employee ID:</strong> {form.emp_code}
-                  </p>
-                  <p>
-                    <strong>Email:</strong> {form.email}
-                  </p>
-                  <p>
-                    <strong>Phone:</strong> {form.phone}
-                  </p>
+                  <p><strong>Name:</strong> {form.name}</p>
+                  <p><strong>Employee ID:</strong> {form.emp_code}</p>
+                  <p><strong>Email:</strong> {form.email}</p>
+                  <p><strong>Phone:</strong> {form.phone}</p>
                 </div>
-                {isPureAdmin && (
+                {(isAdmin || isSuperAdmin) && (
                   <button
                     className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
                     onClick={() => setShowCreateEmployeeModal(true)}

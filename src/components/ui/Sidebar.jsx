@@ -15,7 +15,7 @@ const menuItems = [
   { name: "Home", icon: Home, path: "/home" },
   { name: "Timesheet", icon: Calendar, path: "/timesheet" },
   { name: "Profile", icon: User, path: "/profile" },
-  { name: "Inbox", icon: PlaneIcon, path: "/inbox" },
+  { name: "Leave", icon: PlaneIcon, path: "/inbox" },
   { name: "Post", icon: PenSquare, path: "/post" },
   { name: "Company", icon: Building2, path: "/company" },
   { name: "Support", icon: HeadphonesIcon, path: "/support" },

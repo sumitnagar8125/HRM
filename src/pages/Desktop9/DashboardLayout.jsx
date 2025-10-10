@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Profile from "./Profile";
-import Header from "./header";
+import Header from "./Header";
 
 export default function DashboardLayout() {
   const [user, setUser] = useState(null);
@@ -35,12 +35,15 @@ export default function DashboardLayout() {
     });
   }, []);
 
+  // Role helpers
   const isAdmin = user?.role === "admin";
+  const isSuperAdmin = user?.role === "super_admin";
 
   const handleManageEmployeesClick = () => {
     setShowEmployeeList(true);
   };
 
+  // Edit profile (employee only)
   const handleEditProfile = async (updatedFields) => {
     if (!employeeProfile) return;
     const accessToken = localStorage.getItem("token");
@@ -78,13 +81,13 @@ export default function DashboardLayout() {
   return (
     <>
       <Header
-        isAdmin={isAdmin}
+        isAdmin={isAdmin || isSuperAdmin}
         onManageEmployees={handleManageEmployeesClick}
       />
       <Profile
         user={user.role === "employee" ? employeeProfile : user}
         isAdmin={isAdmin}
-        isPureAdmin={user.role === "admin"}
+        isSuperAdmin={isSuperAdmin}
         onEditProfile={handleEditProfile}
         onEditImage={handleEditImage}
         showEmployeeList={showEmployeeList}
