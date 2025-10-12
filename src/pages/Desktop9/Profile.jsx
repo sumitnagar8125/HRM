@@ -38,7 +38,7 @@ export default function Profile({
   showEmployeeList,
   setShowEmployeeList,
   showCreateEmployeeModal,
-  setShowCreateEmployeeModal
+  setShowCreateEmployeeModal,
 }) {
   const [editMode, setEditMode] = useState(false);
   const [employeeList, setEmployeeList] = useState([]);
@@ -78,9 +78,26 @@ export default function Profile({
     if (showEmployeeList && (isAdmin || isSuperAdmin)) fetchEmployees();
   }, [showEmployeeList, isAdmin, isSuperAdmin]);
 
+  const resetNewEmployeeForm = () => {
+    setNewEmployee({
+      username: "",
+      password: "",
+      role: "employee",
+      name: "",
+      email: "",
+      phone: "",
+      avatar_url: "",
+      emp_code: "",
+    });
+  };
+
+  const openCreateEmployeeModal = () => {
+    resetNewEmployeeForm();
+    setShowCreateEmployeeModal(true);
+  };
+
   const handleAvatarClick = () => {
-    if (fileInputRef.current)
-      fileInputRef.current.click();
+    if (fileInputRef.current) fileInputRef.current.click();
   };
 
   const updateAvatarOnServer = async (base64Image) => {
@@ -265,6 +282,108 @@ export default function Profile({
 
   return (
     <>
+      {showCreateEmployeeModal && (isAdmin || isSuperAdmin) && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-8 rounded-xl shadow-2xl max-w-lg w-full">
+            <h2 className="text-2xl font-bold mb-6 text-center text-blue-700">Create Employee</h2>
+            <form onSubmit={handleCreateEmployee} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-gray-700 mb-1 font-medium">Username</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Username"
+                    value={newEmployee.username}
+                    onChange={(e) => setNewEmployee({ ...newEmployee, username: e.target.value })}
+                    className="w-full p-2 border rounded focus:outline-none focus:ring focus:border-blue-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 mb-1 font-medium">Password</label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="Password"
+                    value={newEmployee.password}
+                    onChange={(e) => setNewEmployee({ ...newEmployee, password: e.target.value })}
+                    className="w-full p-2 border rounded focus:outline-none focus:ring focus:border-blue-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 mb-1 font-medium">Role</label>
+                  <select
+                    required
+                    value={newEmployee.role}
+                    onChange={(e) => setNewEmployee({ ...newEmployee, role: e.target.value })}
+                    className="w-full p-2 border rounded focus:outline-none focus:ring focus:border-blue-400"
+                  >
+                    <option value="employee">Employee</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-gray-700 mb-1 font-medium">Name</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Name"
+                    value={newEmployee.name}
+                    onChange={(e) => setNewEmployee({ ...newEmployee, name: e.target.value })}
+                    className="w-full p-2 border rounded focus:outline-none focus:ring focus:border-blue-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 mb-1 font-medium">Email</label>
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    value={newEmployee.email}
+                    onChange={(e) => setNewEmployee({ ...newEmployee, email: e.target.value })}
+                    className="w-full p-2 border rounded focus:outline-none focus:ring focus:border-blue-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 mb-1 font-medium">Phone</label>
+                  <input
+                    type="text"
+                    placeholder="Phone"
+                    value={newEmployee.phone}
+                    onChange={(e) => setNewEmployee({ ...newEmployee, phone: e.target.value })}
+                    className="w-full p-2 border rounded focus:outline-none focus:ring focus:border-blue-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 mb-1 font-medium">Employee Code</label>
+                  <input
+                    type="text"
+                    placeholder="Employee Code"
+                    value={newEmployee.emp_code}
+                    onChange={(e) => setNewEmployee({ ...newEmployee, emp_code: e.target.value })}
+                    className="w-full p-2 border rounded focus:outline-none focus:ring focus:border-blue-400"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 pt-4">
+                <button
+                  type="button"
+                  className="bg-gray-300 text-gray-700 px-5 py-2 rounded hover:bg-gray-400 transition"
+                  onClick={() => setShowCreateEmployeeModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition font-semibold"
+                >
+                  Create
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {showEmployeeList && (isAdmin || isSuperAdmin) && !editMode ? (
         <div className="flex justify-center items-start min-h-full">
           <div className="w-full max-w-2xl mx-auto rounded-xl mt-12 bg-white shadow-md relative">
@@ -272,7 +391,7 @@ export default function Profile({
               <h2 className="font-bold text-xl text-blue-800">All Employees</h2>
               <button
                 className="bg-blue-600 text-white font-semibold rounded px-4 py-2 shadow hover:bg-blue-700 transition"
-                onClick={() => setShowCreateEmployeeModal(true)}
+                onClick={openCreateEmployeeModal}
               >
                 + Create Employee
               </button>
@@ -342,7 +461,9 @@ export default function Profile({
                   type={field === "email" ? "email" : "text"}
                   value={form[field]}
                   onChange={
-                    field === "name" ? (e) => setForm({ ...form, [field]: e.target.value }) : undefined
+                    field === "name"
+                      ? (e) => setForm({ ...form, [field]: e.target.value })
+                      : undefined
                   }
                   className="border p-2 rounded w-full"
                   readOnly={field !== "name"}
@@ -360,153 +481,34 @@ export default function Profile({
           </form>
         </div>
       ) : (
-        <>
-          {showCreateEmployeeModal && (isAdmin || isSuperAdmin) && (
-            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-              <div className="bg-white p-8 rounded-xl shadow-2xl max-w-lg w-full">
-                <h2 className="text-2xl font-bold mb-6 text-center text-blue-700">Create Employee</h2>
-                <form onSubmit={handleCreateEmployee} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-gray-700 mb-1 font-medium">Username</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="Username"
-                        value={newEmployee.username}
-                        onChange={(e) =>
-                          setNewEmployee({ ...newEmployee, username: e.target.value })
-                        }
-                        className="w-full p-2 border rounded focus:outline-none focus:ring focus:border-blue-400"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-gray-700 mb-1 font-medium">Password</label>
-                      <input
-                        type="password"
-                        required
-                        placeholder="Password"
-                        value={newEmployee.password}
-                        onChange={(e) =>
-                          setNewEmployee({ ...newEmployee, password: e.target.value })
-                        }
-                        className="w-full p-2 border rounded focus:outline-none focus:ring focus:border-blue-400"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-gray-700 mb-1 font-medium">Role</label>
-                      <select
-                        required
-                        value={newEmployee.role}
-                        onChange={(e) =>
-                          setNewEmployee({ ...newEmployee, role: e.target.value })
-                        }
-                        className="w-full p-2 border rounded focus:outline-none focus:ring focus:border-blue-400"
-                      >
-                        <option value="employee">Employee</option>
-                        <option value="admin">Admin</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-gray-700 mb-1 font-medium">Name</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="Name"
-                        value={newEmployee.name}
-                        onChange={(e) =>
-                          setNewEmployee({ ...newEmployee, name: e.target.value })
-                        }
-                        className="w-full p-2 border rounded focus:outline-none focus:ring focus:border-blue-400"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-gray-700 mb-1 font-medium">Email</label>
-                      <input
-                        type="email"
-                        placeholder="Email"
-                        value={newEmployee.email}
-                        onChange={(e) =>
-                          setNewEmployee({ ...newEmployee, email: e.target.value })
-                        }
-                        className="w-full p-2 border rounded focus:outline-none focus:ring focus:border-blue-400"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-gray-700 mb-1 font-medium">Phone</label>
-                      <input
-                        type="text"
-                        placeholder="Phone"
-                        value={newEmployee.phone}
-                        onChange={(e) =>
-                          setNewEmployee({ ...newEmployee, phone: e.target.value })
-                        }
-                        className="w-full p-2 border rounded focus:outline-none focus:ring focus:border-blue-400"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-gray-700 mb-1 font-medium">Employee Code</label>
-                      <input
-                        type="text"
-                        placeholder="Employee Code"
-                        value={newEmployee.emp_code}
-                        onChange={(e) =>
-                          setNewEmployee({ ...newEmployee, emp_code: e.target.value })
-                        }
-                        className="w-full p-2 border rounded focus:outline-none focus:ring focus:border-blue-400"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-3 pt-4">
-                    <button
-                      type="button"
-                      className="bg-gray-300 text-gray-700 px-5 py-2 rounded hover:bg-gray-400 transition"
-                      onClick={() => setShowCreateEmployeeModal(false)}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition font-semibold"
-                    >
-                      Create
-                    </button>
-                  </div>
-                </form>
-              </div>
+        <div className="flex flex-col items-center justify-center mt-16">
+          <div className="bg-blue-50 border border-blue-100 rounded-2xl shadow-lg max-w-lg w-full px-8 py-8 flex flex-col items-center">
+            <Avatar
+              src={form.avatar_url}
+              onClick={handleAvatarClick}
+              editable
+            />
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            <div className="mt-4 text-center space-y-1 w-full">
+              <h2 className="text-xl font-bold text-blue-800 mb-1">{form.name}</h2>
+              <div className="text-gray-700"><b>Employee ID:</b> <span className="font-medium">{form.emp_code}</span></div>
+              <div className="text-gray-700"><b>Email:</b> <span className="font-medium">{form.email}</span></div>
+              <div className="text-gray-700"><b>Phone:</b> <span className="font-medium">{form.phone}</span></div>
             </div>
-          )}
-          {!showCreateEmployeeModal && !showEmployeeList && !editMode && (
-            <div className="flex flex-col items-center justify-center mt-16">
-              <div className="bg-blue-50 border border-blue-100 rounded-2xl shadow-lg max-w-lg w-full px-8 py-8 flex flex-col items-center">
-                <Avatar
-                  src={form.avatar_url}
-                  onClick={handleAvatarClick}
-                  editable
-                />
-                <input
-                  type="file"
-                  accept="image/*"
-                  ref={fileInputRef}
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
-                <div className="mt-4 text-center space-y-1 w-full">
-                  <h2 className="text-xl font-bold text-blue-800 mb-1">{form.name}</h2>
-                  <div className="text-gray-700"><b>Employee ID:</b> <span className="font-medium">{form.emp_code}</span></div>
-                  <div className="text-gray-700"><b>Email:</b> <span className="font-medium">{form.email}</span></div>
-                  <div className="text-gray-700"><b>Phone:</b> <span className="font-medium">{form.phone}</span></div>
-                </div>
-                <button
-                  className="w-full bg-blue-600 mt-7 text-white py-2 rounded-lg font-semibold shadow hover:bg-blue-700 transition"
-                  onClick={() => setEditMode(true)}
-                >
-                  Edit Profile
-                </button>
-              </div>
-            </div>
-          )}
-        </>
+            <button
+              className="w-full bg-blue-600 mt-7 text-white py-2 rounded-lg font-semibold shadow hover:bg-blue-700 transition"
+              onClick={() => setEditMode(true)}
+            >
+              Edit Profile
+            </button>
+          </div>
+        </div>
       )}
     </>
   );
