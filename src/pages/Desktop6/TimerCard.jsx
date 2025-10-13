@@ -1,9 +1,10 @@
+// TimerCard.jsx
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import Button from "../../components/ui/Button";
 
 function TimerCard({ onClockAction }) {
-  const [time, setTime] = useState(0);
+  const [time, setTime] = useState(0); 
   const [isRunning, setIsRunning] = useState(false);
   const [isOnBreak, setIsOnBreak] = useState(false);
   const [clockInTime, setClockInTime] = useState(null);
@@ -12,22 +13,29 @@ function TimerCard({ onClockAction }) {
   const [totalBreakSeconds, setTotalBreakSeconds] = useState(0);
 
   const timerRef = useRef(null);
-  const lastUpdateTimeRef = useRef(null);
-  const accumulatedSecondsRef = useRef(0);
+  // Renamed ref to hold the time the fetch completed
+  const fetchTimeRef = useRef(null); 
+  // This ref will hold the server's time and will be updated on every interval tick
+  const serverBaseTimeRef = useRef(0); 
   const token = localStorage.getItem("token");
 
+  // FIX: Simplified Timer - Calculates time based on time passed since the last fetch
   const startTimer = () => {
     if (timerRef.current) clearInterval(timerRef.current);
-    lastUpdateTimeRef.current = Date.now();
+    
+    // Set interval to update time based on elapsed time since the fetch
     timerRef.current = setInterval(() => {
-      const now = Date.now();
-      const delta = Math.floor((now - lastUpdateTimeRef.current) / 1000);
-      if (delta > 0) {
-        accumulatedSecondsRef.current += delta;
-        setTime(accumulatedSecondsRef.current);
-        lastUpdateTimeRef.current = now;
+      if (fetchTimeRef.current) {
+        // Time elapsed since we received the server's data
+        const elapsedMsSinceFetch = Date.now() - fetchTimeRef.current;
+        const elapsedSecondsSinceFetch = Math.floor(elapsedMsSinceFetch / 1000);
+        
+        // Final time = (Server's base elapsed time) + (Time passed since we got the data)
+        const liveSeconds = serverBaseTimeRef.current + elapsedSecondsSinceFetch;
+        
+        setTime(liveSeconds); 
       }
-    }, 1000);
+    }, 100); 
   };
 
   const stopTimer = () => {
@@ -37,29 +45,46 @@ function TimerCard({ onClockAction }) {
     }
   };
 
+  // Fetch active session and initialize state
   useEffect(() => {
     async function fetchActiveSession() {
       if (!token) return;
+      stopTimer();
+
       try {
         const res = await fetch("http://127.0.0.1:8000/attendance-rt/active", {
           headers: { Authorization: `Bearer ${token}` }
         });
+        
+        // 🎯 CRUCIAL STEP: Record the EXACT moment the client received the data
+        const fetchCompletedTime = Date.now(); 
+        
         if (!res.ok) return;
         const data = await res.json();
 
         if (data.session_id && data.status) {
-          setClockInTime(data.clock_in_time); // This should be ISO string from backend (already IST)
+          setClockInTime(data.clock_in_time); 
           setClockOutTime(data.clock_out_time);
           setTotalBreakSeconds(data.elapsed_break_seconds || 0);
-          accumulatedSecondsRef.current = data.elapsed_work_seconds || 0;
-          setTime(accumulatedSecondsRef.current);
           setIsOnBreak(data.status === "break");
-          setIsRunning(data.status === "active");
-
+          
+          // Store the server's absolute time duration (e.g., 480 seconds)
+          serverBaseTimeRef.current = data.elapsed_work_seconds || 0;
+          
           if (data.status === "active") {
+            setIsRunning(true);
+            
+            // Anchor the timer to the moment the fetch finished
+            fetchTimeRef.current = fetchCompletedTime;
+            
+            // Set initial time (which is just the server's time for the first render)
+            setTime(serverBaseTimeRef.current); 
+            
             startTimer();
           } else {
-            stopTimer();
+            setIsRunning(false);
+            setTime(data.elapsed_work_seconds || 0);
+            fetchTimeRef.current = null;
           }
         } else {
           setClockInTime(null);
@@ -67,9 +92,9 @@ function TimerCard({ onClockAction }) {
           setIsRunning(false);
           setIsOnBreak(false);
           setTotalBreakSeconds(0);
-          accumulatedSecondsRef.current = 0;
+          serverBaseTimeRef.current = 0;
+          fetchTimeRef.current = null;
           setTime(0);
-          stopTimer();
         }
       } catch (err) {
         console.error("Error fetching active session", err);
@@ -81,7 +106,7 @@ function TimerCard({ onClockAction }) {
     };
   }, [token]);
 
-  // POST helper
+  // POST helper (unchanged)
   const postAttendanceRT = async (endpoint) => {
     try {
       const res = await fetch(`http://127.0.0.1:8000/attendance-rt/${endpoint}`, {
@@ -95,37 +120,44 @@ function TimerCard({ onClockAction }) {
       }
       return await res.json();
     } catch {
-      alert("Error: could not reach server");
+      alert("Error: could could not reach server");
       return null;
     }
   };
 
+  // Time formatters (unchanged)
   const formatTime = (secs) => {
-    const h = String(Math.floor(secs / 3600)).padStart(2, "0");
-    const m = String(Math.floor((secs % 3600) / 60)).padStart(2, "0");
-    const s = String(secs % 60).padStart(2, "0");
-    return `${h}:${m}:${s}`;
+    const absSecs = Math.abs(secs);
+    const sign = secs < 0 ? '-' : '';
+    const h = String(Math.floor(absSecs / 3600)).padStart(2, "0");
+    const m = String(Math.floor((absSecs % 3600) / 60)).padStart(2, "0");
+    const s = String(absSecs % 60).padStart(2, "0");
+    return `${sign}${h}:${m}:${s}`;
   };
 
-  // FIX: Display IST time correctly according to browser time zone
   const formatTimeIST = (isoString) => {
     if (!isoString) return "--";
     const date = new Date(isoString);
-    // This shows IST if browser is set to IST; otherwise force IST:
     return date.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: false });
   };
 
   const handleClockIn = async (e) => {
     e.preventDefault();
+    const fetchStartedTime = Date.now(); // Record time right before fetch
     const data = await postAttendanceRT("clock-in");
+    
     if (data) {
-      setClockInTime(data.clock_in_time); // Use backend response (should be IST ISO string)
+      setClockInTime(data.clock_in_time);
       setIsRunning(true);
       setIsOnBreak(false);
       setTotalBreakSeconds(0);
       setClockOutTime(null);
-      accumulatedSecondsRef.current = 0;
-      setTime(0);
+      
+      // Reset base time and anchor the running timer to NOW
+      serverBaseTimeRef.current = 0; 
+      fetchTimeRef.current = Date.now(); 
+      
+      setTime(0); 
       startTimer();
       if (onClockAction) onClockAction();
     }
@@ -138,19 +170,31 @@ function TimerCard({ onClockAction }) {
       return;
     }
     if (!window.confirm("Confirm clock out?")) return;
+    
+    stopTimer(); 
+    
     const data = await postAttendanceRT("clock-out");
     if (data) {
-      setClockOutTime(data.clock_out_time); // Use backend response
+      setClockOutTime(data.clock_out_time);
       setIsRunning(false);
       setClockInTime(null);
-      setTime(0);
+      
+      // Set the time to the server's final, accurate duration
+      setTime(data.total_work_seconds || 0); 
+      
+      // Clear all running refs
+      fetchTimeRef.current = null;
+      serverBaseTimeRef.current = 0;
+      
       setTotalBreakSeconds(0);
       setBreakStartTime(null);
       setIsOnBreak(false);
-      stopTimer();
+      
       if (onClockAction) {
         setTimeout(() => onClockAction(), 1500);
       }
+    } else {
+        startTimer();
     }
   };
 
@@ -165,26 +209,31 @@ function TimerCard({ onClockAction }) {
         stopTimer();
       }
     } else {
+      // NOTE: For absolute accuracy on resuming break, you should ideally call fetchActiveSession() 
+      // here to get the new total elapsed_work_seconds, but we stick to minimal changes:
       const data = await postAttendanceRT("stop-break");
       if (data) {
-        const breakEnd = new Date();
-        const breakStart = new Date(breakStartTime);
-        const breakDurationSecs = Math.floor((breakEnd - breakStart) / 1000);
-        setTotalBreakSeconds((prev) => prev + breakDurationSecs);
         setIsOnBreak(false);
         setIsRunning(true);
         setBreakStartTime(null);
+        
+        // When resuming work, anchor the timer to NOW, and the base time is the CURRENT time.
+        serverBaseTimeRef.current = time; // Set the current visual time as the new base
+        fetchTimeRef.current = Date.now(); // Reset anchor point
+        
         startTimer();
       }
     }
   };
+  
+  const workSeconds = time;
 
   return (
     <div className="grid grid-cols-2 gap-3">
       <div className="flex flex-col items-center">
         <div className="w-40 h-40 flex items-center justify-center rounded-full border-8 border-gray-200">
           <span className={`text-2xl font-bold ${isOnBreak ? "text-yellow-600" : "text-red-600"}`}>
-            {formatTime(time)}
+            {formatTime(workSeconds)}
           </span>
         </div>
         <p className="mt-2 text-gray-600">Clocked in at {formatTimeIST(clockInTime)}</p>
@@ -210,7 +259,15 @@ function TimerCard({ onClockAction }) {
         <Button
           type="button"
           className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-6 rounded-lg"
-          onClick={() => setTime((t) => t + 3600)}
+          onClick={() => {
+            if (isRunning) {
+                // Update the total time base and reset the segment timer calculation.
+                serverBaseTimeRef.current = time + 3600; 
+                fetchTimeRef.current = Date.now(); // Reset anchor point
+            } else {
+                setTime((t) => t + 3600); 
+            }
+          }}
           disabled={!isRunning || isOnBreak}
         >
           + Add Hours

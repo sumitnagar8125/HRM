@@ -1,3 +1,4 @@
+// DashboardLayout.jsx
 "use client";
 import React, { useState, useEffect } from "react";
 import TimerCard from "./TimerCard";
@@ -18,46 +19,63 @@ export default function DashboardLayout() {
   }, []);
 
   const fetchAttendance = async () => {
-  if (!token) return;
+    if (!token) return;
 
-  setLoading(true);
+    setLoading(true);
 
-  try {
-    const res = await fetch(`http://127.0.0.1:8000/attendance-rt/recent?days=14`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    try {
+      // Fetch data for a longer period (e.g., 30 days) to reliably capture the current week.
+      const res = await fetch(`http://127.0.0.1:8000/attendance-rt/recent?days=30`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    if (!res.ok) throw new Error("Failed to fetch attendance");
+      if (!res.ok) throw new Error("Failed to fetch attendance");
 
-    const data = await res.json();
+      const data = await res.json();
+      
+      // --- FIX: Logic to filter for the current calendar week (Sun-Sat) ---
+      const now = new Date();
+      // Calculate start of the current week (Sunday)
+      const currentDayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - currentDayOfWeek);
+      startOfWeek.setHours(0, 0, 0, 0); // Set to midnight Sunday morning
 
-    // Take only last 7 days
-    const last7Days = data.slice(-7);
-    const daysLabel = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 7); // Set to midnight next Sunday morning
 
-    // Aggregate by day label
-    const dayWise = {};
-    last7Days.forEach(record => {
-      const dateObj = new Date(record.date);
-      const day = daysLabel[dateObj.getDay()];
-      if (!dayWise[day]) {
-        dayWise[day] = { day, workedHours: 0, breaks: 0, overtime: 0 };
-      }
-      dayWise[day].workedHours += record.total_work_seconds / 3600;
-      dayWise[day].breaks += record.total_break_seconds / 3600;
-      dayWise[day].overtime += record.ot_sec / 3600;
-    });
+      const currentWeekData = data.filter(record => {
+          const recordDate = new Date(record.date);
+          // Check if recordDate is on or after startOfWeek AND strictly before endOfWeek
+          return recordDate >= startOfWeek && recordDate < endOfWeek;
+      });
+      // --- End FIX ---
+      
+      const daysLabel = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-    // Always create 7 bars in calendar order
-    const weekly = daysLabel.map(day => dayWise[day] || { day, workedHours: 0, breaks: 0, overtime: 0 });
+      // Aggregate by day label
+      const dayWise = {};
+      currentWeekData.forEach(record => { // Use currentWeekData here
+        const dateObj = new Date(record.date);
+        const day = daysLabel[dateObj.getDay()];
+        if (!dayWise[day]) {
+          dayWise[day] = { day, workedHours: 0, breaks: 0, overtime: 0 };
+        }
+        dayWise[day].workedHours += record.total_work_seconds / 3600;
+        dayWise[day].breaks += record.total_break_seconds / 3600;
+        dayWise[day].overtime += record.ot_sec / 3600;
+      });
 
-    setWeeklyData(weekly);
-    setLoading(false);
-  } catch (err) {
-    console.error("Error fetching attendance:", err);
-    setLoading(false);
-  }
-};
+      // Always create 7 bars in calendar order, filling missing days with 0
+      const weekly = daysLabel.map(day => dayWise[day] || { day, workedHours: 0, breaks: 0, overtime: 0 });
+
+      setWeeklyData(weekly);
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching attendance:", err);
+      setLoading(false);
+    }
+  };
 
 
   useEffect(() => {
