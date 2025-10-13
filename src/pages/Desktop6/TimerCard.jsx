@@ -48,7 +48,7 @@ function TimerCard({ onClockAction }) {
         const data = await res.json();
 
         if (data.session_id && data.status) {
-          setClockInTime(data.clock_in_time);
+          setClockInTime(data.clock_in_time); // This should be ISO string from backend (already IST)
           setClockOutTime(data.clock_out_time);
           setTotalBreakSeconds(data.elapsed_break_seconds || 0);
           accumulatedSecondsRef.current = data.elapsed_work_seconds || 0;
@@ -62,7 +62,6 @@ function TimerCard({ onClockAction }) {
             stopTimer();
           }
         } else {
-          // No active session
           setClockInTime(null);
           setClockOutTime(null);
           setIsRunning(false);
@@ -108,18 +107,19 @@ function TimerCard({ onClockAction }) {
     return `${h}:${m}:${s}`;
   };
 
+  // FIX: Display IST time correctly according to browser time zone
   const formatTimeIST = (isoString) => {
     if (!isoString) return "--";
     const date = new Date(isoString);
-    const istDate = new Date(date.getTime() + 330 * 60000);
-    return istDate.toTimeString().slice(0, 5);
+    // This shows IST if browser is set to IST; otherwise force IST:
+    return date.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: false });
   };
 
   const handleClockIn = async (e) => {
     e.preventDefault();
     const data = await postAttendanceRT("clock-in");
     if (data) {
-      setClockInTime(new Date().toISOString());
+      setClockInTime(data.clock_in_time); // Use backend response (should be IST ISO string)
       setIsRunning(true);
       setIsOnBreak(false);
       setTotalBreakSeconds(0);
@@ -140,7 +140,7 @@ function TimerCard({ onClockAction }) {
     if (!window.confirm("Confirm clock out?")) return;
     const data = await postAttendanceRT("clock-out");
     if (data) {
-      setClockOutTime(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
+      setClockOutTime(data.clock_out_time); // Use backend response
       setIsRunning(false);
       setClockInTime(null);
       setTime(0);
@@ -205,7 +205,7 @@ function TimerCard({ onClockAction }) {
           onClick={handleClockOut}
           disabled={!isRunning}
         >
-          Clock Out {clockOutTime || ""}
+          Clock Out {clockOutTime ? formatTimeIST(clockOutTime) : ""}
         </Button>
         <Button
           type="button"
