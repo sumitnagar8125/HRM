@@ -1,3 +1,4 @@
+// Profile.jsx
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 
@@ -53,16 +54,19 @@ export default function Profile({
     avatar_url: "",
     emp_code: "",
   });
+  
   const [form, setForm] = useState({
     name: user?.name || "",
     phone: user?.phone || "",
     email: user?.email || "",
     emp_code: user?.emp_code || "",
     avatar_url: user?.avatar_url || "",
+    username: user?.username || "",
   });
   const fileInputRef = useRef(null);
 
   useEffect(() => {
+    // Sync form state when the parent's user prop changes
     if (user) {
       setForm({
         name: user.name || "",
@@ -70,6 +74,7 @@ export default function Profile({
         email: user.email || "",
         emp_code: user.emp_code || "",
         avatar_url: user.avatar_url || "",
+        username: user.username || "",
       });
     }
   }, [user]);
@@ -97,7 +102,8 @@ export default function Profile({
   };
 
   const handleAvatarClick = () => {
-    if (fileInputRef.current) fileInputRef.current.click();
+    // Only allow avatar change in self-edit mode
+    if (!editingEmployee && fileInputRef.current) fileInputRef.current.click();
   };
 
   const updateAvatarOnServer = async (base64Image) => {
@@ -122,7 +128,7 @@ export default function Profile({
       }
       alert("Profile picture updated successfully.");
       setForm((f) => ({ ...f, avatar_url: base64Image }));
-      if (onEditImage) onEditImage(base64Image);
+      if (onEditImage) onEditImage(base64Image); // Notify parent component
     } catch {
       alert("Network error while updating avatar.");
     }
@@ -172,6 +178,7 @@ export default function Profile({
       email: emp.email || "",
       emp_code: emp.emp_code || "",
       avatar_url: emp.avatar_url || "",
+      username: emp.username || "",
     });
     setEditMode(true);
   };
@@ -183,102 +190,96 @@ export default function Profile({
       alert("Please log in to update profile.");
       return;
     }
-    const idToUpdate = editingEmployee ? editingEmployee.id : user.id;
+
+    const isSelfEdit = !editingEmployee;
+    let updateData = {};
+    let updateEndpoint = "";
+
+    if (isSelfEdit) {
+      // Employee Self-Edit (Name and Phone)
+      updateEndpoint = `http://127.0.0.1:8000/employees/me/update-profile`;
+      updateData = { 
+        name: form.name, 
+        phone: form.phone 
+      };
+    } else {
+      // Admin Edit (Only Name)
+      updateEndpoint = `http://127.0.0.1:8000/employees/${editingEmployee.id}`;
+      updateData = { 
+        name: form.name
+      };
+    }
+
     try {
-      const res = await fetch(`http://127.0.0.1:8000/employees/${idToUpdate}`, {
+      const res = await fetch(updateEndpoint, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ name: form.name }),
+        body: JSON.stringify(updateData),
       });
+      
       if (!res.ok) {
-        const err = await res.text();
-        alert(`Failed to update profile: ${err}`);
+        const err = await res.json();
+        alert(`Failed to update profile: ${err.detail || 'Unknown error'}`);
         return;
       }
+      
+      const updatedProfile = await res.json();
+
       alert("Profile updated successfully.");
-      if (editingEmployee) {
-        setForm({
-          name: user?.name || "",
-          phone: user?.phone || "",
-          email: user?.email || "",
-          emp_code: user?.emp_code || "",
-          avatar_url: user?.avatar_url || "",
-        });
-      }
+      
+      setForm(prevForm => ({ ...prevForm, ...updatedProfile })); 
+
       setEditMode(false);
       setEditingEmployee(null);
+      
       if (showEmployeeList) {
-        fetchEmployees();
+        // FIX: Admin returns to their OWN profile after successfully editing someone else
+        setShowEmployeeList(false); 
       } else if (onEditProfile) {
-        onEditProfile(form);
+        // Employee self-edit: update parent state
+        onEditProfile(updatedProfile); 
       }
-    } catch {
+      
+    } catch (error) {
+      console.error(error);
       alert("Network error while updating profile.");
     }
   };
 
   const cancelEdit = () => {
-    if (editingEmployee) {
+    // Reset form state to the original data
+    const originalData = editingEmployee || user;
+    if (originalData) {
       setForm({
-        name: user?.name || "",
-        phone: user?.phone || "",
-        email: user?.email || "",
-        emp_code: user?.emp_code || "",
-        avatar_url: user?.avatar_url || "",
+        name: originalData.name || "",
+        phone: originalData.phone || "",
+        email: originalData.email || "",
+        emp_code: originalData.emp_code || "",
+        avatar_url: originalData.avatar_url || "",
+        username: originalData.username || "",
       });
     }
+    
+    // FIX: If admin was editing another employee, canceling returns them to their OWN profile
+    if (editingEmployee) {
+        setShowEmployeeList(false); 
+    }
+    
     setEditMode(false);
     setEditingEmployee(null);
   };
 
-  const handleCreateEmployee = async (e) => {
-    e.preventDefault();
-    const token = localStorage.getItem("token");
-    if (!token) {
-      alert("Please log in");
-      return;
-    }
-    try {
-      const user_data = {
-        username: newEmployee.username,
-        password: newEmployee.password,
-        role: newEmployee.role,
-        email: newEmployee.email,
-        phone: newEmployee.phone,
-        avatar_url: newEmployee.avatar_url,
-        emp_code: newEmployee.emp_code,
-      };
-      const employee_data = {
-        name: newEmployee.name || newEmployee.username,
-        user_id: 0,
-        email: newEmployee.email,
-        phone: newEmployee.phone,
-        avatar_url: newEmployee.avatar_url,
-        emp_code: newEmployee.emp_code,
-      };
-      const res = await fetch("http://127.0.0.1:8000/admin/create-user-employee", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ user_data, employee_data }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        alert("Error: " + (data.detail || "Unknown error"));
-        return;
-      }
-      alert("Employee created");
-      setShowCreateEmployeeModal(false);
-      fetchEmployees();
-    } catch {
-      alert("Network error");
-    }
-  };
+  // Define fields and their edit permissions
+  const fields = [
+      { key: "name", label: "Name", editable: (isSelfEdit) => true }, 
+      { key: "username", label: "Username", editable: (isSelfEdit) => false }, 
+      { key: "email", label: "Email", editable: (isSelfEdit) => false }, 
+      { key: "phone", label: "Phone", editable: (isSelfEdit) => isSelfEdit }, 
+      { key: "emp_code", label: "Employee ID", editable: (isSelfEdit) => false }, 
+  ];
 
   return (
     <>
@@ -438,39 +439,53 @@ export default function Profile({
             </button>
           </div>
         </div>
+
       ) : editMode ? (
-        <div className="flex justify-center items-start min-h-full">
+        <div className="flex justify-center items-start min-h-screen px-4 py-10 overflow-y-auto"> 
           <form
             onSubmit={saveEdit}
-            className="w-full max-w-lg mt-12 bg-white rounded-xl shadow p-6 space-y-6"
+            // max-w-lg and mx-auto center the form horizontally
+            className="w-full max-w-lg mx-auto bg-white rounded-xl shadow p-6 space-y-6" 
           >
             <div className="flex items-center justify-center relative">
-              <Avatar src={form.avatar_url} onClick={handleAvatarClick} editable />
+              <Avatar src={form.avatar_url} onClick={handleAvatarClick} editable={!editingEmployee} />
               <input
                 type="file"
                 accept="image/*"
                 ref={fileInputRef}
                 className="hidden"
                 onChange={handleFileChange}
+                disabled={!!editingEmployee}
               />
+              {editingEmployee && (
+                  <p className="absolute -bottom-6 text-sm text-red-500">*Admin cannot change another employee's avatar.</p>
+              )}
             </div>
-            {["name", "email", "phone", "emp_code"].map((field) => (
-              <div key={field}>
-                <label className="font-bold capitalize">{field.replace("_", " ")}</label>
-                <input
-                  type={field === "email" ? "email" : "text"}
-                  value={form[field]}
-                  onChange={
-                    field === "name"
-                      ? (e) => setForm({ ...form, [field]: e.target.value })
-                      : undefined
-                  }
-                  className="border p-2 rounded w-full"
-                  readOnly={field !== "name"}
-                />
-              </div>
-            ))}
-            <div className="flex gap-2">
+            
+            {/* 🎯 FIX: Implement a two-column grid for the form fields */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4"> 
+              {fields.map((field) => {
+                const isSelfEdit = !editingEmployee;
+                const isEditable = field.editable(isSelfEdit);
+
+                return (
+                  <div key={field.key} className={`${field.key === 'name' ? 'col-span-1' : 'col-span-1'}`}> 
+                    <label className="font-bold capitalize block mb-1">{field.label}</label>
+                    <input
+                      type={field.key === "email" ? "email" : "text"}
+                      value={form[field.key] || ''}
+                      onChange={isEditable ? (e) => setForm({ ...form, [field.key]: e.target.value }) : undefined}
+                      className={`border p-2 rounded w-full ${isEditable ? 'bg-white' : 'bg-gray-100 text-gray-500 cursor-not-allowed'}`}
+                      readOnly={!isEditable}
+                      required={field.key === "name" && isEditable}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+            {/* End of Grid */}
+            
+            <div className="flex gap-2 pt-4">
               <button type="submit" className="bg-blue-600 w-full py-2 rounded text-white">
                 Save changes
               </button>
@@ -480,6 +495,7 @@ export default function Profile({
             </div>
           </form>
         </div>
+
       ) : (
         <div className="flex flex-col items-center justify-center mt-16">
           <div className="bg-blue-50 border border-blue-100 rounded-2xl shadow-lg max-w-lg w-full px-8 py-8 flex flex-col items-center">
@@ -495,11 +511,14 @@ export default function Profile({
               className="hidden"
               onChange={handleFileChange}
             />
-            <div className="mt-4 text-center space-y-1 w-full">
-              <h2 className="text-xl font-bold text-blue-800 mb-1">{form.name}</h2>
-              <div className="text-gray-700"><b>Employee ID:</b> <span className="font-medium">{form.emp_code}</span></div>
-              <div className="text-gray-700"><b>Email:</b> <span className="font-medium">{form.email}</span></div>
-              <div className="text-gray-700"><b>Phone:</b> <span className="font-medium">{form.phone}</span></div>
+            <div className="mt-4 text-center space-y-2 w-full">
+              <h2 className="text-2xl font-bold text-blue-800 mb-2">{form.name}</h2>
+              
+              <div className="text-gray-700"><b>Username:</b> <span className="font-medium">{form.username || 'N/A'}</span></div>
+              <div className="text-gray-700"><b>Employee ID:</b> <span className="font-medium">{form.emp_code || 'N/A'}</span></div>
+              <div className="text-gray-700"><b>Email:</b> <span className="font-medium">{form.email || 'N/A'}</span></div>
+              <div className="text-gray-700"><b>Phone:</b> <span className="font-medium">{form.phone || 'N/A'}</span></div>
+              
             </div>
             <button
               className="w-full bg-blue-600 mt-7 text-white py-2 rounded-lg font-semibold shadow hover:bg-blue-700 transition"

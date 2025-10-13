@@ -1,3 +1,4 @@
+// DashboardLayout.jsx
 "use client";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
@@ -11,25 +12,33 @@ export default function DashboardLayout() {
   const [showCreateEmployeeModal, setShowCreateEmployeeModal] = useState(false);
 
   useEffect(() => {
-  const accessToken = localStorage.getItem("token");
-  axios.get("http://127.0.0.1:8000/users/me", {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  })
-    .then(userRes => {
-      setUser(userRes.data);
-      // Always fetch employee profile for all users present in Employee table
-      return axios.get("http://127.0.0.1:8000/employees/me", {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-    })
-    .then(empRes => {
-      if(empRes) setEmployeeProfile(empRes.data);
-    })
-    .catch(() => {
-      setUser(null);
-      setEmployeeProfile(null);
-    });
-}, []);
+    const accessToken = localStorage.getItem("token");
+    if (!accessToken) {
+        return;
+    }
+    
+    const fetchProfiles = () => {
+        axios.get("http://127.0.0.1:8000/users/me", {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        })
+          .then(userRes => {
+            setUser(userRes.data);
+            return axios.get("http://127.0.0.1:8000/employees/me", {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            });
+          })
+          .then(empRes => {
+            if(empRes) setEmployeeProfile(empRes.data);
+          })
+          .catch((error) => {
+            console.error("Error fetching profiles:", error);
+            setUser(null);
+            setEmployeeProfile(null);
+          });
+    };
+
+    fetchProfiles();
+  }, []);
 
 
   // Role helpers
@@ -40,40 +49,17 @@ export default function DashboardLayout() {
     setShowEmployeeList(true);
   };
 
-  // Edit profile (employee only)
-  const handleEditProfile = async (updatedFields) => {
-    if (!employeeProfile) return;
-    const accessToken = localStorage.getItem("token");
-    try {
-      const response = await axios.put(
-        `http://127.0.0.1:8000/employees/${employeeProfile.id}`,
-        updatedFields,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-      setEmployeeProfile(response.data);
-      alert("Profile updated successfully!");
-    } catch {
-      alert("Failed to update profile.");
-    }
+  const handleProfileUpdateSuccess = (updatedProfile) => {
+    // Updates local state after employee self-edit success in Profile.jsx
+    setEmployeeProfile(updatedProfile);
   };
 
-  const handleEditImage = async (avatarData) => {
-    if (!employeeProfile) return;
-    const accessToken = localStorage.getItem("token");
-    try {
-      await axios.put(
-        `http://127.0.0.1:8000/employees/me/avatar`,
-        { avatar_data: avatarData },
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-      setEmployeeProfile({ ...employeeProfile, avatar_url: avatarData });
-      alert("Profile image updated!");
-    } catch {
-      alert("Failed to update profile image.");
-    }
+  const handleEditImage = (avatarData) => {
+    // Updates local state after employee self-avatar update success in Profile.jsx
+    setEmployeeProfile(prev => ({ ...prev, avatar_url: avatarData }));
   };
 
-  if(!user) return <div>Loading...</div>;
+  if(!user) return <div className="p-8 text-center text-gray-500">Loading profile...</div>;
 
   return (
     <>
@@ -82,18 +68,16 @@ export default function DashboardLayout() {
         onManageEmployees={handleManageEmployeesClick}
       />
       <Profile
-  user={employeeProfile || user}
-  isAdmin={isAdmin}
-  isSuperAdmin={isSuperAdmin}
-  onEditProfile={handleEditProfile}
-  onEditImage={handleEditImage}
-  showEmployeeList={showEmployeeList}
-  setShowEmployeeList={setShowEmployeeList}
-  showCreateEmployeeModal={showCreateEmployeeModal}
-  setShowCreateEmployeeModal={setShowCreateEmployeeModal}
-/>
-
-
+        user={employeeProfile || user}
+        isAdmin={isAdmin}
+        isSuperAdmin={isSuperAdmin}
+        onEditProfile={handleProfileUpdateSuccess}
+        onEditImage={handleEditImage}
+        showEmployeeList={showEmployeeList}
+        setShowEmployeeList={setShowEmployeeList}
+        showCreateEmployeeModal={showCreateEmployeeModal}
+        setShowCreateEmployeeModal={setShowCreateEmployeeModal}
+      />
     </>
   );
 }
