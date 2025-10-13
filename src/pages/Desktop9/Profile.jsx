@@ -272,6 +272,51 @@ export default function Profile({
     setEditingEmployee(null);
   };
 
+  // 🎯 FIX: RESTORED handleCreateEmployee function definition
+  const handleCreateEmployee = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Please log in");
+      return;
+    }
+    try {
+      const user_data = {
+        username: newEmployee.username,
+        password: newEmployee.password,
+        role: newEmployee.role,
+      };
+      const employee_data = {
+        name: newEmployee.name || newEmployee.username,
+        user_id: 0,
+        email: newEmployee.email,
+        phone: newEmployee.phone,
+        avatar_url: newEmployee.avatar_url,
+        emp_code: newEmployee.emp_code,
+      };
+      // Assuming this endpoint handles both user creation and employee profile creation
+      const res = await fetch("http://127.0.0.1:8000/admin/create-user-employee", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ user_data, employee_data }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        alert("Error: " + (data.detail || "Unknown error"));
+        return;
+      }
+      alert("Employee created");
+      setShowCreateEmployeeModal(false);
+      fetchEmployees();
+    } catch {
+      alert("Network error");
+    }
+  };
+
+
   // Define fields and their edit permissions
   const fields = [
       { key: "name", label: "Name", editable: (isSelfEdit) => true }, 
@@ -441,11 +486,12 @@ export default function Profile({
         </div>
 
       ) : editMode ? (
-        <div className="flex justify-center items-start min-h-screen px-4 py-10 overflow-y-auto"> 
+        
+        <div className="flex justify-center items-start px-4"> 
           <form
             onSubmit={saveEdit}
             // max-w-lg and mx-auto center the form horizontally
-            className="w-full max-w-lg mx-auto bg-white rounded-xl shadow p-6 space-y-6" 
+            className="w-full max-w-lg mx-auto mt-12 mb-12 bg-white rounded-xl shadow p-6 space-y-6" // Added mb-12 for bottom spacing
           >
             <div className="flex items-center justify-center relative">
               <Avatar src={form.avatar_url} onClick={handleAvatarClick} editable={!editingEmployee} />
@@ -462,14 +508,13 @@ export default function Profile({
               )}
             </div>
             
-            {/* 🎯 FIX: Implement a two-column grid for the form fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4"> 
               {fields.map((field) => {
                 const isSelfEdit = !editingEmployee;
                 const isEditable = field.editable(isSelfEdit);
 
                 return (
-                  <div key={field.key} className={`${field.key === 'name' ? 'col-span-1' : 'col-span-1'}`}> 
+                  <div key={field.key} className="col-span-1"> 
                     <label className="font-bold capitalize block mb-1">{field.label}</label>
                     <input
                       type={field.key === "email" ? "email" : "text"}
@@ -483,7 +528,6 @@ export default function Profile({
                 );
               })}
             </div>
-            {/* End of Grid */}
             
             <div className="flex gap-2 pt-4">
               <button type="submit" className="bg-blue-600 w-full py-2 rounded text-white">
@@ -495,7 +539,7 @@ export default function Profile({
             </div>
           </form>
         </div>
-
+        
       ) : (
         <div className="flex flex-col items-center justify-center mt-16">
           <div className="bg-blue-50 border border-blue-100 rounded-2xl shadow-lg max-w-lg w-full px-8 py-8 flex flex-col items-center">
