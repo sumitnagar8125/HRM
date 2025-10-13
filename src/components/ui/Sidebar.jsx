@@ -18,7 +18,7 @@ const menuItems = [
   { name: "Leave", icon: PlaneIcon, path: "/inbox" },
   { name: "Post", icon: PenSquare, path: "/post" },
   { name: "Company", icon: Building2, path: "/company" },
-  { name: "Support", icon: HeadphonesIcon, path: "/support" },
+  
 ];
 const statusMenuItem = { name: "Status", icon: CheckCircle, path: "/status" };
 
@@ -55,7 +55,7 @@ export default function Sidebar() {
 
   function handleLogout() {
     localStorage.removeItem("token");
-    router.push("/"); // Redirect to landing page
+    router.push("/"); 
   }
 
   return (
