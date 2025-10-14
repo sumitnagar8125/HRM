@@ -2,11 +2,20 @@
 
 import React from "react";
 
-
 export default function Header() {
   return (
-    <header className="flex justify-between items-center px-4 py-3 border border-blue-400 rounded-md shadow-sm bg-white w-full">
-      <h1 className="text-blue-700 font-semibold">Company Details</h1>
+    <header
+      className="flex justify-between items-center px-4 py-3 border border-blue-400 rounded-md shadow-sm w-full relative"
+      style={{
+        backgroundImage: "url('/Hbg.jpg')", // Place a wide landscape image in /public as Cbg.jpg
+        backgroundSize: "cover",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "center",
+        maxHeight: "60px",
+        minHeight: "60px",
+      }}
+    >
+      <h1 className="text-blue-700 font-semibold relative z-10">Company Details</h1>
     </header>
   );
 }

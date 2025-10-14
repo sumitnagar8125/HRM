@@ -1,4 +1,3 @@
-// Profile.jsx
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 
@@ -54,7 +53,7 @@ export default function Profile({
     avatar_url: "",
     emp_code: "",
   });
-  
+
   const [form, setForm] = useState({
     name: user?.name || "",
     phone: user?.phone || "",
@@ -66,7 +65,6 @@ export default function Profile({
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    // Sync form state when the parent's user prop changes
     if (user) {
       setForm({
         name: user.name || "",
@@ -102,7 +100,6 @@ export default function Profile({
   };
 
   const handleAvatarClick = () => {
-    // Only allow avatar change in self-edit mode
     if (!editingEmployee && fileInputRef.current) fileInputRef.current.click();
   };
 
@@ -128,7 +125,7 @@ export default function Profile({
       }
       alert("Profile picture updated successfully.");
       setForm((f) => ({ ...f, avatar_url: base64Image }));
-      if (onEditImage) onEditImage(base64Image); // Notify parent component
+      if (onEditImage) onEditImage(base64Image);
     } catch {
       alert("Network error while updating avatar.");
     }
@@ -196,18 +193,11 @@ export default function Profile({
     let updateEndpoint = "";
 
     if (isSelfEdit) {
-      // Employee Self-Edit (Name and Phone)
       updateEndpoint = `http://127.0.0.1:8000/employees/me/update-profile`;
-      updateData = { 
-        name: form.name, 
-        phone: form.phone 
-      };
+      updateData = { name: form.name, phone: form.phone };
     } else {
-      // Admin Edit (Only Name)
       updateEndpoint = `http://127.0.0.1:8000/employees/${editingEmployee.id}`;
-      updateData = { 
-        name: form.name
-      };
+      updateData = { name: form.name };
     }
 
     try {
@@ -219,30 +209,23 @@ export default function Profile({
         },
         body: JSON.stringify(updateData),
       });
-      
+
       if (!res.ok) {
         const err = await res.json();
         alert(`Failed to update profile: ${err.detail || 'Unknown error'}`);
         return;
       }
-      
+
       const updatedProfile = await res.json();
-
       alert("Profile updated successfully.");
-      
-      setForm(prevForm => ({ ...prevForm, ...updatedProfile })); 
-
+      setForm(prevForm => ({ ...prevForm, ...updatedProfile }));
       setEditMode(false);
       setEditingEmployee(null);
-      
       if (showEmployeeList) {
-        // FIX: Admin returns to their OWN profile after successfully editing someone else
-        setShowEmployeeList(false); 
+        setShowEmployeeList(false);
       } else if (onEditProfile) {
-        // Employee self-edit: update parent state
-        onEditProfile(updatedProfile); 
+        onEditProfile(updatedProfile);
       }
-      
     } catch (error) {
       console.error(error);
       alert("Network error while updating profile.");
@@ -250,7 +233,6 @@ export default function Profile({
   };
 
   const cancelEdit = () => {
-    // Reset form state to the original data
     const originalData = editingEmployee || user;
     if (originalData) {
       setForm({
@@ -262,19 +244,28 @@ export default function Profile({
         username: originalData.username || "",
       });
     }
-    
-    // FIX: If admin was editing another employee, canceling returns them to their OWN profile
     if (editingEmployee) {
-        setShowEmployeeList(false); 
+      setShowEmployeeList(false);
     }
-    
     setEditMode(false);
     setEditingEmployee(null);
   };
 
-  // 🎯 FIX: RESTORED handleCreateEmployee function definition
+  // Mandatory fields checked and enforced for all roles
   const handleCreateEmployee = async (e) => {
     e.preventDefault();
+
+    if (
+      !newEmployee.username.trim() ||
+      !newEmployee.password.trim() ||
+      !newEmployee.role.trim() ||
+      !newEmployee.name.trim() ||
+      !newEmployee.email.trim()
+    ) {
+      alert("All fields (Username, Password, Role, Name, Email) are required");
+      return;
+    }
+
     const token = localStorage.getItem("token");
     if (!token) {
       alert("Please log in");
@@ -294,7 +285,6 @@ export default function Profile({
         avatar_url: newEmployee.avatar_url,
         emp_code: newEmployee.emp_code,
       };
-      // Assuming this endpoint handles both user creation and employee profile creation
       const res = await fetch("http://127.0.0.1:8000/admin/create-user-employee", {
         method: "POST",
         headers: {
@@ -316,14 +306,12 @@ export default function Profile({
     }
   };
 
-
-  // Define fields and their edit permissions
   const fields = [
-      { key: "name", label: "Name", editable: (isSelfEdit) => true }, 
-      { key: "username", label: "Username", editable: (isSelfEdit) => false }, 
-      { key: "email", label: "Email", editable: (isSelfEdit) => false }, 
-      { key: "phone", label: "Phone", editable: (isSelfEdit) => isSelfEdit }, 
-      { key: "emp_code", label: "Employee ID", editable: (isSelfEdit) => false }, 
+    { key: "name", label: "Name", editable: (isSelfEdit) => true },
+    { key: "username", label: "Username", editable: (isSelfEdit) => false },
+    { key: "email", label: "Email", editable: (isSelfEdit) => false },
+    { key: "phone", label: "Phone", editable: (isSelfEdit) => isSelfEdit },
+    { key: "emp_code", label: "Employee ID", editable: (isSelfEdit) => false },
   ];
 
   return (
@@ -335,7 +323,9 @@ export default function Profile({
             <form onSubmit={handleCreateEmployee} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-gray-700 mb-1 font-medium">Username</label>
+                  <label className="block text-gray-700 mb-1 font-medium">
+                    Username<span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="text"
                     required
@@ -346,7 +336,9 @@ export default function Profile({
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 mb-1 font-medium">Password</label>
+                  <label className="block text-gray-700 mb-1 font-medium">
+                    Password<span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="password"
                     required
@@ -357,32 +349,41 @@ export default function Profile({
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 mb-1 font-medium">Role</label>
+                  <label className="block text-gray-700 mb-1 font-medium">
+                    Role<span className="text-red-500">*</span>
+                  </label>
                   <select
                     required
                     value={newEmployee.role}
                     onChange={(e) => setNewEmployee({ ...newEmployee, role: e.target.value })}
                     className="w-full p-2 border rounded focus:outline-none focus:ring focus:border-blue-400"
                   >
+                    <option value="">Select Role</option>
                     <option value="employee">Employee</option>
                     <option value="admin">Admin</option>
+                    <option value="super_admin">Super Admin</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-gray-700 mb-1 font-medium">Name</label>
+                  <label className="block text-gray-700 mb-1 font-medium">
+                    Full Name<span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="text"
                     required
-                    placeholder="Name"
+                    placeholder="Full Name"
                     value={newEmployee.name}
                     onChange={(e) => setNewEmployee({ ...newEmployee, name: e.target.value })}
                     className="w-full p-2 border rounded focus:outline-none focus:ring focus:border-blue-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 mb-1 font-medium">Email</label>
+                  <label className="block text-gray-700 mb-1 font-medium">
+                    Email<span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="email"
+                    required
                     placeholder="Email"
                     value={newEmployee.email}
                     onChange={(e) => setNewEmployee({ ...newEmployee, email: e.target.value })}
@@ -484,14 +485,11 @@ export default function Profile({
             </button>
           </div>
         </div>
-
       ) : editMode ? (
-        
-        <div className="flex justify-center items-start px-4"> 
+        <div className="flex justify-center items-start px-4">
           <form
             onSubmit={saveEdit}
-            // max-w-lg and mx-auto center the form horizontally
-            className="w-full max-w-lg mx-auto mt-12 mb-12 bg-white rounded-xl shadow p-6 space-y-6" // Added mb-12 for bottom spacing
+            className="w-full max-w-lg mx-auto mt-12 mb-12 bg-white rounded-xl shadow p-6 space-y-6"
           >
             <div className="flex items-center justify-center relative">
               <Avatar src={form.avatar_url} onClick={handleAvatarClick} editable={!editingEmployee} />
@@ -504,17 +502,19 @@ export default function Profile({
                 disabled={!!editingEmployee}
               />
               {editingEmployee && (
-                  <p className="absolute -bottom-6 text-sm text-red-500">*Admin cannot change another employee's avatar.</p>
+                <p className="absolute -bottom-6 text-sm text-red-500">
+                  *Admin cannot change another employee's avatar.
+                </p>
               )}
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4"> 
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
               {fields.map((field) => {
                 const isSelfEdit = !editingEmployee;
                 const isEditable = field.editable(isSelfEdit);
 
                 return (
-                  <div key={field.key} className="col-span-1"> 
+                  <div key={field.key} className="col-span-1">
                     <label className="font-bold capitalize block mb-1">{field.label}</label>
                     <input
                       type={field.key === "email" ? "email" : "text"}
@@ -528,7 +528,7 @@ export default function Profile({
                 );
               })}
             </div>
-            
+
             <div className="flex gap-2 pt-4">
               <button type="submit" className="bg-blue-600 w-full py-2 rounded text-white">
                 Save changes
@@ -539,7 +539,6 @@ export default function Profile({
             </div>
           </form>
         </div>
-        
       ) : (
         <div className="flex flex-col items-center justify-center mt-16">
           <div className="bg-blue-50 border border-blue-100 rounded-2xl shadow-lg max-w-lg w-full px-8 py-8 flex flex-col items-center">
@@ -557,12 +556,10 @@ export default function Profile({
             />
             <div className="mt-4 text-center space-y-2 w-full">
               <h2 className="text-2xl font-bold text-blue-800 mb-2">{form.name}</h2>
-              
               <div className="text-gray-700"><b>Username:</b> <span className="font-medium">{form.username || 'N/A'}</span></div>
               <div className="text-gray-700"><b>Employee ID:</b> <span className="font-medium">{form.emp_code || 'N/A'}</span></div>
               <div className="text-gray-700"><b>Email:</b> <span className="font-medium">{form.email || 'N/A'}</span></div>
               <div className="text-gray-700"><b>Phone:</b> <span className="font-medium">{form.phone || 'N/A'}</span></div>
-              
             </div>
             <button
               className="w-full bg-blue-600 mt-7 text-white py-2 rounded-lg font-semibold shadow hover:bg-blue-700 transition"

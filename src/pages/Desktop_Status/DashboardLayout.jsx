@@ -48,7 +48,7 @@ function DashboardLayout() {
     letterSpacing: "0.03em",
   }}
 >
-  Employee Status Dashboard
+  {/* Employee Status Dashboard */ }
 </h2>
       <Status employees={employees} />
     </div>
