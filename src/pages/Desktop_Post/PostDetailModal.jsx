@@ -13,7 +13,7 @@ export default function PostDetailModal({ postId, onClose, onToggleReaction, onM
 
   useEffect(() => {
     const fetchPost = async () => {
-      // Fetch the post data. Since your backend returns all posts, we filter locally.
+      // Fetch post data (including filtering for role/ID logic remains the same)
       const url = role === "admin" || role === "super_admin" ? `${BACKEND_URL}/admin/posts` : `${BACKEND_URL}/posts`;
       const res = await fetch(url, { headers: getAuthHeaders() });
       const data = await res.json();
@@ -26,14 +26,13 @@ export default function PostDetailModal({ postId, onClose, onToggleReaction, onM
       }
     };
     fetchPost();
-    // We don't want to re-fetch on role or markViewed change, only when postId changes.
   }, [postId]);
 
   if (!post) return null;
 
   return (
     <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl px-10 py-7 w-full max-w-2xl relative max-h-[90vh]"> {/* Added max-h-[90vh] to the modal container */}
+      <div className="bg-white rounded-2xl shadow-2xl px-10 py-7 w-full max-w-2xl relative max-h-[90vh]">
         <button className="absolute top-4 right-6 text-3xl font-bold hover:text-red-500" onClick={onClose}>&times;</button>
 
         {/* Modal Header */}
@@ -42,23 +41,30 @@ export default function PostDetailModal({ postId, onClose, onToggleReaction, onM
           {post.is_pinned && <span className="text-2xl text-yellow-400" title="Pinned">📌</span>}
         </div>
 
-        {/* Post Content Area - ADDED SCROLLING PROPERTIES */}
+        {/* Content Area: Removed onMouseEnter/onMouseLeave from here.
+        The content area is scrollable, so hover triggers are unstable. 
+        */}
         <div
           className="text-gray-700 mb-6 py-2 pr-2 overflow-y-auto max-h-96"
-          onMouseEnter={() => setShowReactions(true)}
-          onMouseLeave={() => setShowReactions(false)}
         >
-          {/* Ensure long text respects line breaks/word wrap */}
           <pre className="whitespace-pre-wrap font-sans">{post.content}</pre>
         </div>
 
-        {/* Reactions and Footer */}
-        <div className="relative">
+        {/* NEW WRAPPER: This div is now stable, non-scrolling, and holds the hover handlers.
+        It covers the reaction area and the content area below the scroll boundary.
+        */}
+        <div
+          className="relative"
+          onMouseEnter={() => setShowReactions(true)}
+          onMouseLeave={() => setShowReactions(false)}
+        >
+          {/* Reactions and Footer */}
           {showReactions && (
-            <div className="absolute -top-14 left-0 z-10">
+            <div className="absolute -top-14 left-0 z-10"> {/* Positioned above the reaction chips */}
               <ReactionHoverBar onReact={emoji => onToggleReaction(post.id, emoji)} />
             </div>
           )}
+
           <div className="flex gap-2 mb-1 pt-2 border-t border-gray-100">
             {Object.entries(post.reaction_counts || {}).map(([emoji, count]) => (
               <button
@@ -74,8 +80,8 @@ export default function PostDetailModal({ postId, onClose, onToggleReaction, onM
               </button>
             ))}
           </div>
+          <div className="text-xs text-gray-500 mt-3">By {post.author_name} | {post.created_at}</div>
         </div>
-        <div className="text-xs text-gray-500 mt-3">By {post.author_name} | {post.created_at}</div>
       </div>
     </div>
   );
