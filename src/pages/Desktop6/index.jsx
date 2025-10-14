@@ -8,15 +8,19 @@ export default function IndexPage() {
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <Sidebar />
-
-      <div className="flex flex-col flex-1">
+      <aside className="h-full w-64 flex-shrink-0">
+        <Sidebar />
+      </aside>
+      <main className="flex flex-col flex-1 min-h-0">
         {/* Header */}
-        <Header />
-
+        <div className="w-full">
+          <Header />
+        </div>
         {/* Dashboard */}
-        <DashboardLayout />
-      </div>
+        <div className="flex-1 overflow-auto min-h-0">
+          <DashboardLayout />
+        </div>
+      </main>
     </div>
   );
 }
