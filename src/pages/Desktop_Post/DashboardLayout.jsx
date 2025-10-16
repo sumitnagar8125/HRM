@@ -97,6 +97,8 @@ export default function DashboardLayout({ user }) {
     await fetchData();
   }
 
+  // src/pages/Desktop_Post/DashboardLayout.js (inside markViewed)
+
   async function markViewed(postId) {
     if (!isAdminOrSuperAdmin) {
       // 1. Hit API to mark as viewed
@@ -106,10 +108,8 @@ export default function DashboardLayout({ user }) {
       });
 
       // 2. Optimistically update local state to reflect the change instantly
-      // Decrement unread count for the local header badge
       setUnreadCount(prev => Math.max(0, prev - 1));
 
-      // Mark the specific post as viewed in the local `posts` array
       setPosts(prevPosts =>
         prevPosts.map(post =>
           post.id === postId
@@ -117,8 +117,7 @@ export default function DashboardLayout({ user }) {
             : post
         )
       );
-
-      // Removed: await fetchData()
+      // REMOVED: await fetchData() - This is correct to prevent recursion/errors.
     }
   }
 
@@ -149,10 +148,10 @@ export default function DashboardLayout({ user }) {
 
       <main>
         {loading ? (
-  <LoadingSpinner />
-) : posts.length === 0 ? (
-  <p className="text-center text-gray-500 my-20 text-lg">No posts available</p>
-) : (
+          <LoadingSpinner />
+        ) : posts.length === 0 ? (
+          <p className="text-center text-gray-500 my-20 text-lg">No posts available</p>
+        ) : (
 
 
           <div className="space-y-4">

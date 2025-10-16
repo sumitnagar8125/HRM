@@ -9,7 +9,6 @@ import {
   Home, User, Building2, Calendar, HelpCircle, LogOut,
   PlaneIcon, PenSquare, CheckCircle, Bell
 } from "lucide-react";
-
 const menuItems = [
   { name: "Home", icon: Home, path: "/home" },
   { name: "Timesheet", icon: Calendar, path: "/timesheet" },
@@ -65,7 +64,7 @@ export default function Sidebar() {
     return () => clearInterval(intervalId);
   }, []);
 
-  if (loading) return <div>Loading...</div>;
+//  if (loading) return <div>Loading...</div>;
 
   let itemsToShow = [...menuItems];
   if (role === "admin" || role === "super_admin") {
