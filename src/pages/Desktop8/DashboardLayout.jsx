@@ -8,7 +8,7 @@ import Calenderui from "./Calenderui";
 import Timesheet from "./Timesheet";
 import TimeCards from "./TimeCards";
 import { Clock, Coffee, BarChart3 } from "lucide-react";
-
+import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
 function secondsToHMS(seconds) {
   if (typeof seconds !== "number") return "-";
   const h = Math.floor(seconds / 3600);
@@ -260,7 +260,8 @@ export default function DashboardLayout() {
   }, []);
 
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-  if (loading) return <div>Loading...</div>;
+ if (loading) return <LoadingSpinner />;
+
   if (role === "admin" || role === "super_admin") return <AdminDashboard token={token} currentUsername={currentUsername} role={role} />;
   if (role === "employee") return <EmployeeDashboard token={token} />;
   return <div>User role missing or not recognized</div>;

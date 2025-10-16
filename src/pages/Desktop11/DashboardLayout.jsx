@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Notification from "./Notification";
 import Header from "./Header";
-
+import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
 const BACKEND_URL = "http://127.0.0.1:8000";
 
 const DashboardLayout = () => {
@@ -64,7 +64,7 @@ const DashboardLayout = () => {
       <Header role={role} />
       <main className="p-6">
         {loading ? (
-          <p>Loading leave data...</p>
+           <LoadingSpinner />
         ) : (
           <Notification
             notifications={notifications}

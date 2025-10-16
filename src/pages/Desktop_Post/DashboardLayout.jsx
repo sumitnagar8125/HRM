@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import PostCard from "./PostCard";
 import PostDetailModal from "./PostDetailModal";
 import CreatePostModal from "./CreatePostModal";
-
+import LoadingSpinner from "../../components/ui/LoadingSpinner";
 const BACKEND_URL = "http://127.0.0.1:8000";
 
 export default function DashboardLayout({ user }) {
@@ -149,10 +149,12 @@ export default function DashboardLayout({ user }) {
 
       <main>
         {loading ? (
-          <p className="text-center text-blue-500 my-20 text-lg">Loading posts...</p>
-        ) : posts.length === 0 ? (
-          <p className="text-center text-gray-500 my-20 text-lg">No posts available</p>
-        ) : (
+  <LoadingSpinner />
+) : posts.length === 0 ? (
+  <p className="text-center text-gray-500 my-20 text-lg">No posts available</p>
+) : (
+
+
           <div className="space-y-4">
             {posts.map((post) => (
               <PostCard

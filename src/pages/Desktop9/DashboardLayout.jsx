@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Profile from "./Profile";
 import Header from "./Header";
-
+import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
 export default function DashboardLayout() {
   const [user, setUser] = useState(null);
   const [employeeProfile, setEmployeeProfile] = useState(null);
@@ -59,7 +59,7 @@ export default function DashboardLayout() {
     setEmployeeProfile(prev => ({ ...prev, avatar_url: avatarData }));
   };
 
-  if(!user) return <div className="p-8 text-center text-gray-500">Loading profile...</div>;
+  if(!user) return <LoadingSpinner />;
 
   return (
     <>

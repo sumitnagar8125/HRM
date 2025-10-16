@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Status from "./Status";
 import axios from "axios";
-
+import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
 function DashboardLayout() {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,7 +33,8 @@ function DashboardLayout() {
       });
   }, []);
 
-  if (loading) return <div>Loading employee status...</div>;
+  if (loading) return <LoadingSpinner />;
+
 
   return (
     <div style={{ padding: "28px" }}>

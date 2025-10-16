@@ -6,7 +6,7 @@ import BarChart from "./BarChart";
 import ActivityCard from "./ActivityCard";
 import StatsCard from "./StatsCard";
 import { Clock, Coffee, BarChart3 } from "lucide-react";
-
+import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
 export default function DashboardLayout() {
   const [token, setToken] = useState(null);
   const [weeklyData, setWeeklyData] = useState([]);
@@ -82,7 +82,8 @@ export default function DashboardLayout() {
     fetchAttendance();
   }, [token]);
 
-  if (loading) return <div className="p-6">Loading dashboard...</div>;
+  if (loading) return <LoadingSpinner />;
+
 
   const hasData = weeklyData.some(
     (day) => day.workedHours > 0 || day.breaks > 0 || day.overtime > 0
