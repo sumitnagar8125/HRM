@@ -1,15 +1,31 @@
 "use client";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
 import Divider from "../../components/ui/Divider";
 import SocialButton from "../../components/ui/SocialButton";
 
 export default function RightPanel() {
-  // Only login state now
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const router = useRouter();
+
+  // Automatically redirect if valid token exists
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    fetch("http://127.0.0.1:8000/users/me", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(res => {
+        if (res.ok) {
+          window.location.href = "/home"; // or router.push("/home");
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Handle Login
   const handleLogin = async (e) => {
