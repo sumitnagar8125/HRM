@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Image from "next/image";
@@ -20,6 +18,7 @@ const menuItems = [
 ];
 const statusMenuItem = { name: "Status", icon: CheckCircle, path: "/status" };
 
+
 const BACKEND_URL = "http://127.0.0.1:8000";
 
 export default function Sidebar() {
@@ -27,7 +26,20 @@ export default function Sidebar() {
   const [loading, setLoading] = useState(true);
   const [unreadPostsCount, setUnreadPostsCount] = useState(0);
   const router = useRouter();
-  const pathname = usePathname(); // Key change
+  const pathname = usePathname();
+
+  // --- NEW EFFECT: sync logout across tabs
+  useEffect(() => {
+    const handleStorageChange = (event) => {
+      if (event.key === "token" && !event.newValue) {
+        // Token was removed, redirect to login
+        router.push("/");
+      }
+    };
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, [router]);
+  // --- END NEW EFFECT
 
   const getAuthHeaders = () => ({
     Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
@@ -65,8 +77,6 @@ export default function Sidebar() {
     return () => clearInterval(intervalId);
   }, []);
 
-  if (loading) return <div>Loading...</div>;
-
   let itemsToShow = [...menuItems];
   if (role === "admin" || role === "super_admin") {
     itemsToShow = [itemsToShow[0], statusMenuItem, ...itemsToShow.slice(1)];
@@ -74,6 +84,7 @@ export default function Sidebar() {
 
   function handleLogout() {
     localStorage.removeItem("token");
+    // Also triggers storage event for other tabs
     router.push("/");
   }
 
@@ -90,8 +101,7 @@ export default function Sidebar() {
         <ul className="space-y-3">
           {itemsToShow.map((item) => {
             const showNotification = item.name === "Post" && unreadPostsCount > 0;
-            const currentActive = pathname === item.path; // Dynamic route-based highlight
-
+            const currentActive = pathname === item.path;
             return (
               <li key={item.name}>
                 <Link

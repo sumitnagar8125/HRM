@@ -1,3 +1,5 @@
+// src/pages/Desktop_Post/PostDetailModal.js
+
 import React, { useState, useEffect } from "react";
 import ReactionHoverBar from "./ReactionHoverBar";
 
@@ -13,20 +15,22 @@ export default function PostDetailModal({ postId, onClose, onToggleReaction, onM
 
   useEffect(() => {
     const fetchPost = async () => {
-      // Fetch post data (including filtering for role/ID logic remains the same)
       const url = role === "admin" || role === "super_admin" ? `${BACKEND_URL}/admin/posts` : `${BACKEND_URL}/posts`;
       const res = await fetch(url, { headers: getAuthHeaders() });
       const data = await res.json();
       const found = data.find(p => p.id === postId);
+
       setPost(found);
 
-      // Mark as viewed logic
+      // --- FRONEND FIX TO AVOID BACKEND INTEGRITY ERROR ---
+      // Only call the API function if the post is explicitly NOT viewed yet.
+      // This MUST be placed AFTER setPost(found) to ensure 'found' is fully resolved.
       if (found && !found.is_viewed) {
         onMarkViewed(postId);
       }
     };
     fetchPost();
-  }, [postId]);
+  }, [postId]); // Dependency on postId ensures this logic runs only when the modal opens/post changes
 
   if (!post) return null;
 
@@ -41,39 +45,37 @@ export default function PostDetailModal({ postId, onClose, onToggleReaction, onM
           {post.is_pinned && <span className="text-2xl text-yellow-400" title="Pinned">📌</span>}
         </div>
 
-        {/* Content Area: Removed onMouseEnter/onMouseLeave from here.
-        The content area is scrollable, so hover triggers are unstable. 
-        */}
+        {/* Content Area */}
         <div
           className="text-gray-700 mb-6 py-2 pr-2 overflow-y-auto max-h-96"
         >
           <pre className="whitespace-pre-wrap font-sans">{post.content}</pre>
         </div>
 
-        {/* NEW WRAPPER: This div is now stable, non-scrolling, and holds the hover handlers.
-        It covers the reaction area and the content area below the scroll boundary.
-        */}
+        {/* Reactions Wrapper */}
         <div
           className="relative"
           onMouseEnter={() => setShowReactions(true)}
           onMouseLeave={() => setShowReactions(false)}
         >
-          {/* Reactions and Footer */}
           {showReactions && (
-            <div className="absolute -top-14 left-0 z-10"> {/* Positioned above the reaction chips */}
+            <div className="absolute -top-14 left-0 z-10">
               <ReactionHoverBar onReact={emoji => onToggleReaction(post.id, emoji)} />
             </div>
           )}
 
           <div className="flex gap-2 mb-1 pt-2 border-t border-gray-100">
+            {/* ... Reaction Buttons ... */}
             {Object.entries(post.reaction_counts || {}).map(([emoji, count]) => (
               <button
                 key={emoji}
                 className={`
-                  px-2 py-1 rounded-full font-medium bg-gray-100 text-gray-700 flex items-center gap-1 text-sm
-                  ${post.user_reactions?.includes(emoji) ? "ring-2 ring-blue-400 bg-blue-100 text-blue-700" : ""}
-              `}
+ px-2 py-1 rounded-full font-medium bg-gray-100 text-gray-700 flex items-center gap-1 text-sm
+  ${post.user_reactions?.includes(emoji) ? "ring-2 ring-blue-400 bg-blue-100 text-blue-700" : ""}
+   `}
                 onClick={e => { e.stopPropagation(); onToggleReaction(post.id, emoji); }}
+                // Fix for emoji rendering issue (safe addition):
+                style={{ fontFamily: 'Segoe UI Emoji, Apple Color Emoji, Noto Color Emoji, sans-serif' }}
               >
                 <span>{emoji}</span>
                 <span>{count}</span>
