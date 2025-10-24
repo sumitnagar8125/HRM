@@ -1,7 +1,5 @@
-
-
 import React, { useState } from "react";
-// import ReactionHoverBar from "./ReactionHoverBar"; // Removed unused import
+import ReactionHoverBar from "./ReactionHoverBar";
 
 export default function PostCard({
   post,
@@ -13,15 +11,13 @@ export default function PostCard({
   actionLoading,
   onClick,
 }) {
-  // const [showReactions, setShowReactions] = useState(false); // Removed unused state
+  const [showReactions, setShowReactions] = useState(false);
 
-  // Function to format time difference (e.g., "10h ago")
   const getTimeAgo = (datetimeString) => {
     try {
       const date = new Date(datetimeString);
       const now = new Date();
       const seconds = Math.floor((now - date) / 1000);
-
       if (seconds < 60) return `${seconds}s ago`;
       const minutes = Math.floor(seconds / 60);
       if (minutes < 60) return `${minutes}m ago`;
@@ -29,105 +25,96 @@ export default function PostCard({
       if (hours < 24) return `${hours}h ago`;
       const days = Math.floor(hours / 24);
       if (days < 7) return `${days}d ago`;
-
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
     } catch {
-      return 'Unknown time';
+      return "Unknown time";
     }
   };
 
+  // Set colors explicitly for pinned/unpinned.
+  const cardStyle = post.is_pinned
+    ? {}
+    : {
+        background: "#f3f7fb",
+        border: "1.5px solid #e0eaf6"
+      };
+
   return (
     <div
-      className={`relative rounded-xl p-5 shadow-sm bg-blue-50 border border-blue-100 transition duration-300 hover:shadow-md cursor-pointer ${post.is_pinned ? "border-2 border-yellow-400 bg-yellow-50" : ""
-        } ${!post.is_viewed && !isAdmin ? "ring-2 ring-blue-500/50" : ""}`}
-      onMouseEnter={null}
-      onMouseLeave={null}
+      className={
+        `
+        relative rounded-xl px-6 py-5 shadow transition cursor-pointer
+        hover:shadow-md
+        ${post.is_pinned
+          ? "border-2 border-yellow-400 bg-yellow-50"
+          : ""}
+        ${!post.is_viewed && !isAdmin ? "ring-2 ring-blue-300/40" : ""}
+        `
+      }
+      style={{
+        ...cardStyle,
+        opacity: actionLoading ? 0.7 : 1
+      }}
+      onMouseEnter={() => setShowReactions(true)}
+      onMouseLeave={() => setShowReactions(false)}
       onClick={onClick}
-      style={{ opacity: actionLoading ? 0.7 : 1 }}
     >
-      <header className="flex justify-between items-start mb-2">
-        <div className="flex-1">
-          <h3 className="font-extrabold text-xl text-blue-800 flex items-center gap-2">
-            {post.title}
-            {post.is_pinned && <span title="Pinned" className="text-yellow-600 text-sm">📌 PINNED</span>}
-          </h3>
-          <div className="text-xs text-gray-500 mt-0.5">
-            Posted by **{post.author_name}** | {getTimeAgo(post.created_at)}
-          </div>
-        </div>
-      </header>
-
-      <article className="my-3 text-gray-700 max-h-12 overflow-hidden text-ellipsis whitespace-nowrap">
-        {post.content}
-      </article>
-
-      {/* COMMENTED OUT: Reaction Chips Section */}
-      {/*
-      <section className="flex gap-2 flex-wrap pt-2 border-t border-gray-100">
-        {Object.entries(post.reaction_counts || {}).map(([emoji, count]) => (
-          <button
-            key={emoji}
-            type="button"
-            className={`...`}
-            onClick={(e) => {
-              e.stopPropagation();
-              // onToggleReaction(post.id, emoji); 
-            }}
-            title={`React with ${emoji}`}
-          >
-            <span>{emoji}</span>
-            <span>{count}</span>
-          </button>
-        ))}
-      </section>
-      */}
-
-      {isAdmin && (
-        <footer className="flex justify-end gap-3 mt-4 pt-3 border-t border-gray-100 select-none">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onPin(post.id);
-            }}
-            disabled={actionLoading}
-            className={`px-4 py-1.5 rounded-lg font-semibold transition duration-200 shadow-sm text-sm ${post.is_pinned
-              ? "bg-yellow-400 hover:bg-yellow-500 text-yellow-900"
-              : "bg-gray-200 hover:bg-gray-300 text-gray-800"
-              }`}
-          >
-            {post.is_pinned ? "Unpin" : "Pin"}
-          </button>
-
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (window.confirm("Are you sure you want to delete this post?")) {
-                onDelete(post.id);
-              }
-            }}
-            disabled={actionLoading}
-            className="px-4 py-1.5 rounded-lg bg-red-100 hover:bg-red-300 text-red-700 font-semibold shadow-sm transition duration-200 text-sm"
-          >
-            Delete
-          </button>
-        </footer>
+      {post.is_pinned && (
+        <span className="absolute right-4 top-4 text-yellow-500 text-xl" title="Pinned">
+          📌
+        </span>
       )}
 
-      {/* COMMENTED OUT: Reaction Hover Bar */}
-      {/*
-      {showReactions && allowReact && (
-        <div
-          className="absolute -top-12 left-6 z-30 transition duration-300 ease-in-out"
-          onMouseEnter={() => setShowReactions(true)}
-          onMouseLeave={() => setShowReactions(false)}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <ReactionHoverBar onReact={(emoji) => onToggleReaction(post.id, emoji)} />
-        </div>
-      )}
-      */}
+      <h3 className="font-extrabold text-base md:text-lg text-blue-800 mb-1 flex items-center gap-2">
+        {post.title}
+      </h3>
+      <div className="mb-3 text-gray-700 font-normal break-words">
+        {post.content.length > 120
+          ? (
+            <>
+              {post.content.slice(0, 120)}
+              <span className="text-blue-400 font-semibold">... Read more</span>
+            </>
+          )
+          : post.content
+        }
+      </div>
+      <div className="flex justify-between items-center mt-2 pt-2 border-t border-blue-50 gap-2">
+        <div className="flex gap-2 flex-wrap">
+          {(Object.entries(post.reaction_counts || {})).map(([emoji, count]) => (
+            <button
+              key={emoji}
+              type="button"
+              onClick={e => { e.stopPropagation(); onToggleReaction(post.id, emoji); }}
+              className={`
+                flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium transition
+                ${post.user_reactions?.includes(emoji)
+                  ? "bg-blue-50 text-blue-700 border border-blue-400 shadow"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200"}
+              `}
+              style={{ fontFamily: "Segoe UI Emoji, Apple Color Emoji, Noto Color Emoji, sans-serif" }}
+              title={`React with ${emoji}`}
+            >
+              <span>{emoji}</span>
+              <span>{count}</span>
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-col sm:flex-row sm:gap-3 text-xs text-gray-400 items-end sm:items-center">
+          <span className="text-xs">{getTimeAgo(post.created_at)}</span>
+          <span>by <b className="text-blue-600">{post.author_name}</b></span>
+        </div>
+      </div>
+      {showReactions && allowReact && (
+        <div
+          className="absolute left-6 -top-12 z-50"
+          onMouseEnter={() => setShowReactions(true)}
+          onMouseLeave={() => setShowReactions(false)}
+          onClick={e => e.stopPropagation()}
+        >
+          <ReactionHoverBar onReact={emoji => onToggleReaction(post.id, emoji)} />
+        </div>
+      )}
     </div>
   );
 }

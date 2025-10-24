@@ -1,10 +1,8 @@
-// src/pages/Desktop_Post/DashboardLayout.js
-
 import React, { useEffect, useState } from "react";
 import PostCard from "./PostCard";
 import PostDetailModal from "./PostDetailModal";
 import CreatePostModal from "./CreatePostModal";
-import LoadingSpinner from "../../components/ui/LoadingSpinner"; 
+// import LoadingSpinner from "../../components/ui/LoadingSpinner"; 
 const BACKEND_URL = "http://127.0.0.1:8000";
 
 export default function DashboardLayout({ user }) {
@@ -86,8 +84,6 @@ export default function DashboardLayout({ user }) {
     await fetchData();
   }
 
-  /* COMMENTED OUT: Temporarily disabling reaction API call */
-  /*
   async function toggleReaction(postId, emoji) {
     setActionLoading((prev) => ({ ...prev, [postId]: true }));
     await fetch(`${BACKEND_URL}/posts/${postId}/react`, {
@@ -98,23 +94,20 @@ export default function DashboardLayout({ user }) {
     setActionLoading((prev) => ({ ...prev, [postId]: false }));
     await fetchData();
   }
-  */
 
   async function markViewed(postId) {
     if (!isAdminOrSuperAdmin) {
-      // 1. Hit API to mark as viewed
       await fetch(`${BACKEND_URL}/posts/${postId}/view`, {
         method: "POST",
         headers: getAuthHeaders(),
       });
 
-      // 2. Optimistically update local state to reflect the change instantly
       setUnreadCount(prev => Math.max(0, prev - 1));
 
       setPosts(prevPosts =>
         prevPosts.map(post =>
           post.id === postId
-            ? { ...post, is_viewed: true } // Mark as viewed
+            ? { ...post, is_viewed: true }
             : post
         )
       );
@@ -123,10 +116,11 @@ export default function DashboardLayout({ user }) {
 
   return (
     <div className="max-w-4xl mx-auto p-8 bg-white rounded-lg shadow-xl mt-8 mb-8">
-      <header className="flex justify-between items-center mb-6 border-b pb-4 border-gray-200">
-        <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
+      <header className="flex justify-between items-center mb-6 border-b-0 pb-0 border-gray-200">
+        {/* (Dashboard heading removed here) */}
+        <div />
         {!isAdminOrSuperAdmin && (
-          <div className="inline-flex items-center space-x-2">
+          <div className="inline-flex items-center space-x-2 ml-auto mr-2 -mt-3 mb-2">
             <span className="text-gray-700 font-semibold">Unread</span>
             <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-semibold">{unreadCount}</span>
           </div>
@@ -135,7 +129,7 @@ export default function DashboardLayout({ user }) {
           <button
             disabled={actionLoading.create || loading}
             onClick={() => setSelectedPostId("create")}
-            className="bg-gradient-to-br from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white px-6 py-2 rounded shadow font-semibold transition duration-200"
+            className="bg-gradient-to-br from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white px-6 py-2 rounded shadow font-semibold transition duration-200 ml-auto"
           >
             {actionLoading.create ? "Creating..." : "+ Create Post"}
           </button>
@@ -149,25 +143,24 @@ export default function DashboardLayout({ user }) {
       <main>
         {loading ? (
           <div>
-            <LoadingSpinner />
-        </div>
+            <p className="text-center text-blue-500 my-20 text-lg">Loading posts...</p>
+          </div>
         ) : posts.length === 0 ? (
           <p className="text-center text-gray-500 my-20 text-lg">No posts available</p>
         ) : (
-
-
           <div className="space-y-4">
             {posts.map((post) => (
               <PostCard
                 key={post.id}
                 post={post}
                 isAdmin={isAdminOrSuperAdmin}
-                allowReact={false}
+                allowReact={true}
                 onDelete={isAdminOrSuperAdmin ? deletePost : undefined}
                 onPin={isAdminOrSuperAdmin ? togglePin : undefined}
-                // onToggleReaction={toggleReaction}
+                onToggleReaction={toggleReaction}
                 actionLoading={actionLoading[post.id]}
                 onClick={() => setSelectedPostId(post.id)}
+                /* Ensure in PostCard: use the color theme for unpinned (is_pinned === false) */
               />
             ))}
           </div>
@@ -178,7 +171,7 @@ export default function DashboardLayout({ user }) {
         <PostDetailModal
           postId={selectedPostId}
           onClose={() => setSelectedPostId(null)}
-          // onToggleReaction={toggleReaction}
+          onToggleReaction={toggleReaction}
           onMarkViewed={markViewed}
           role={role}
         />
