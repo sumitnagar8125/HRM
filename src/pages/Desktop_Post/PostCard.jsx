@@ -1,7 +1,7 @@
-// src/pages/Desktop_Post/PostCard.js
+
 
 import React, { useState } from "react";
-import ReactionHoverBar from "./ReactionHoverBar";
+// import ReactionHoverBar from "./ReactionHoverBar"; // Removed unused import
 
 export default function PostCard({
   post,
@@ -13,7 +13,7 @@ export default function PostCard({
   actionLoading,
   onClick,
 }) {
-  const [showReactions, setShowReactions] = useState(false);
+  // const [showReactions, setShowReactions] = useState(false); // Removed unused state
 
   // Function to format time difference (e.g., "10h ago")
   const getTimeAgo = (datetimeString) => {
@@ -40,8 +40,8 @@ export default function PostCard({
     <div
       className={`relative rounded-xl p-5 shadow-sm bg-blue-50 border border-blue-100 transition duration-300 hover:shadow-md cursor-pointer ${post.is_pinned ? "border-2 border-yellow-400 bg-yellow-50" : ""
         } ${!post.is_viewed && !isAdmin ? "ring-2 ring-blue-500/50" : ""}`}
-      onMouseEnter={() => setShowReactions(true)}
-      onMouseLeave={() => setShowReactions(false)}
+      onMouseEnter={null}
+      onMouseLeave={null}
       onClick={onClick}
       style={{ opacity: actionLoading ? 0.7 : 1 }}
     >
@@ -61,26 +61,26 @@ export default function PostCard({
         {post.content}
       </article>
 
-      <section className="flex gap-2 flex-wrap pt-2 border-t border-gray-100">
-        {Object.entries(post.reaction_counts || {}).map(([emoji, count]) => (
-          <button
-            key={emoji}
-            type="button"
-            className={`flex items-center gap-1 px-3 py-1 rounded-full font-medium text-sm transition ${post.user_reactions?.includes(emoji)
-                ? "bg-blue-200 text-blue-800 ring-1 ring-blue-500"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleReaction(post.id, emoji);
-            }}
-            title={`React with ${emoji}`}
-          >
-            <span>{emoji}</span>
-            <span>{count}</span>
-          </button>
-        ))}
-      </section>
+      {/* COMMENTED OUT: Reaction Chips Section */}
+      {/*
+      <section className="flex gap-2 flex-wrap pt-2 border-t border-gray-100">
+        {Object.entries(post.reaction_counts || {}).map(([emoji, count]) => (
+          <button
+            key={emoji}
+            type="button"
+            className={`...`}
+            onClick={(e) => {
+              e.stopPropagation();
+              // onToggleReaction(post.id, emoji); 
+            }}
+            title={`React with ${emoji}`}
+          >
+            <span>{emoji}</span>
+            <span>{count}</span>
+          </button>
+        ))}
+      </section>
+      */}
 
       {isAdmin && (
         <footer className="flex justify-end gap-3 mt-4 pt-3 border-t border-gray-100 select-none">
@@ -92,8 +92,8 @@ export default function PostCard({
             }}
             disabled={actionLoading}
             className={`px-4 py-1.5 rounded-lg font-semibold transition duration-200 shadow-sm text-sm ${post.is_pinned
-                ? "bg-yellow-400 hover:bg-yellow-500 text-yellow-900"
-                : "bg-gray-200 hover:bg-gray-300 text-gray-800"
+              ? "bg-yellow-400 hover:bg-yellow-500 text-yellow-900"
+              : "bg-gray-200 hover:bg-gray-300 text-gray-800"
               }`}
           >
             {post.is_pinned ? "Unpin" : "Pin"}
@@ -115,16 +115,19 @@ export default function PostCard({
         </footer>
       )}
 
-      {showReactions && allowReact && (
-        <div
-          className="absolute -top-12 left-6 z-30 transition duration-300 ease-in-out"
-          onMouseEnter={() => setShowReactions(true)}
-          onMouseLeave={() => setShowReactions(false)}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <ReactionHoverBar onReact={(emoji) => onToggleReaction(post.id, emoji)} />
-        </div>
-      )}
+      {/* COMMENTED OUT: Reaction Hover Bar */}
+      {/*
+      {showReactions && allowReact && (
+        <div
+          className="absolute -top-12 left-6 z-30 transition duration-300 ease-in-out"
+          onMouseEnter={() => setShowReactions(true)}
+          onMouseLeave={() => setShowReactions(false)}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <ReactionHoverBar onReact={(emoji) => onToggleReaction(post.id, emoji)} />
+        </div>
+      )}
+      */}
     </div>
   );
 }

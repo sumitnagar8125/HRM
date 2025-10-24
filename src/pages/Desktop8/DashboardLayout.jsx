@@ -148,7 +148,7 @@ function AdminDashboard({ token, currentUsername, role }) {
           >
             <option value="">-- Show My Timesheet --</option>
             {employees
-              .filter((emp) => !((role === "admin" || role === "superadmin") && emp.username === currentUsername))
+              .filter((emp) => !((role === "admin" || role === "super_admin") && emp.username === currentUsername))
               .map((emp) => (
                 <option key={emp.employee_id} value={emp.employee_id}>
                   {emp.employee_name} ({emp.username})

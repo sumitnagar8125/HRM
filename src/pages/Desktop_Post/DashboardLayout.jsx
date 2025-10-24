@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import PostCard from "./PostCard";
 import PostDetailModal from "./PostDetailModal";
 import CreatePostModal from "./CreatePostModal";
-import LoadingSpinner from "../../components/ui/LoadingSpinner";
+import LoadingSpinner from "../../components/ui/LoadingSpinner"; 
 const BACKEND_URL = "http://127.0.0.1:8000";
 
 export default function DashboardLayout({ user }) {
@@ -86,6 +86,8 @@ export default function DashboardLayout({ user }) {
     await fetchData();
   }
 
+  /* COMMENTED OUT: Temporarily disabling reaction API call */
+  /*
   async function toggleReaction(postId, emoji) {
     setActionLoading((prev) => ({ ...prev, [postId]: true }));
     await fetch(`${BACKEND_URL}/posts/${postId}/react`, {
@@ -96,8 +98,7 @@ export default function DashboardLayout({ user }) {
     setActionLoading((prev) => ({ ...prev, [postId]: false }));
     await fetchData();
   }
-
-  // src/pages/Desktop_Post/DashboardLayout.js (inside markViewed)
+  */
 
   async function markViewed(postId) {
     if (!isAdminOrSuperAdmin) {
@@ -117,7 +118,6 @@ export default function DashboardLayout({ user }) {
             : post
         )
       );
-      // REMOVED: await fetchData() - This is correct to prevent recursion/errors.
     }
   }
 
@@ -148,7 +148,9 @@ export default function DashboardLayout({ user }) {
 
       <main>
         {loading ? (
-          <LoadingSpinner />
+          <div>
+            <LoadingSpinner />
+        </div>
         ) : posts.length === 0 ? (
           <p className="text-center text-gray-500 my-20 text-lg">No posts available</p>
         ) : (
@@ -160,10 +162,10 @@ export default function DashboardLayout({ user }) {
                 key={post.id}
                 post={post}
                 isAdmin={isAdminOrSuperAdmin}
-                allowReact={true}
+                allowReact={false}
                 onDelete={isAdminOrSuperAdmin ? deletePost : undefined}
                 onPin={isAdminOrSuperAdmin ? togglePin : undefined}
-                onToggleReaction={toggleReaction}
+                // onToggleReaction={toggleReaction}
                 actionLoading={actionLoading[post.id]}
                 onClick={() => setSelectedPostId(post.id)}
               />
@@ -176,7 +178,7 @@ export default function DashboardLayout({ user }) {
         <PostDetailModal
           postId={selectedPostId}
           onClose={() => setSelectedPostId(null)}
-          onToggleReaction={toggleReaction}
+          // onToggleReaction={toggleReaction}
           onMarkViewed={markViewed}
           role={role}
         />
