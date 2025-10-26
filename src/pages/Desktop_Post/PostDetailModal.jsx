@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import ReactionHoverBar from "./ReactionHoverBar";
 
-const BACKEND_URL = "http://127.0.0.1:8000";
+//const BACKEND_URL = "http://127.0.0.1:8000";
 const getAuthHeaders = () => ({
   Authorization: "Bearer " + (localStorage.getItem("token") || "")
 });
@@ -14,8 +14,8 @@ export default function PostDetailModal({ postId, onClose, onToggleReaction, onM
     const fetchPost = async () => {
       const url =
         role === "admin" || role === "super_admin"
-          ? `${BACKEND_URL}/admin/posts`
-          : `${BACKEND_URL}/posts`;
+          ? `${process.env.NEXT_PUBLIC_API_URL}/admin/posts`
+          : `${process.env.NEXT_PUBLIC_API_URL}/posts`;
       const res = await fetch(url, { headers: getAuthHeaders() });
       const data = await res.json();
       const found = data.find((p) => p.id === postId);

@@ -45,7 +45,7 @@ function AdminDashboard({ token, currentUsername, role }) {
   useEffect(() => {
     if (!token) return;
     axios
-      .get("http://127.0.0.1:8000/attendance-rt/admin/all-employees-status", {
+      .get(`${process.env.NEXT_PUBLIC_API_URL}/attendance-rt/admin/all-employees-status`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => setEmployees(res.data))
@@ -57,7 +57,7 @@ function AdminDashboard({ token, currentUsername, role }) {
     if (!token || viewMode !== "admin") return;
     setLoadingLogs(true);
     axios
-      .get(`http://127.0.0.1:8000/attendance-rt/timesheet?days=${maxPastDays}`, {
+      .get(`${process.env.NEXT_PUBLIC_API_URL}/attendance-rt/timesheet?days=${maxPastDays}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
@@ -78,7 +78,7 @@ function AdminDashboard({ token, currentUsername, role }) {
     if (!token || viewMode !== "employee" || !selectedEmployeeId) return;
     setLoadingLogs(true);
     axios
-      .get(`http://127.0.0.1:8000/attendance-rt/admin/employee/${selectedEmployeeId}/recent?days=${maxPastDays}`, {
+      .get(`${process.env.NEXT_PUBLIC_API_URL}/attendance-rt/admin/employee/${selectedEmployeeId}/recent?days=${maxPastDays}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
@@ -187,7 +187,7 @@ function EmployeeDashboard({ token }) {
   useEffect(() => {
     if (!token) return;
     axios
-      .get("http://127.0.0.1:8000/attendance-rt/timesheet", {
+      .get(`${process.env.NEXT_PUBLIC_API_URL}/attendance-rt/timesheet`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
@@ -246,7 +246,7 @@ export default function DashboardLayout() {
       return;
     }
     axios
-      .get("http://127.0.0.1:8000/users/me", { headers: { Authorization: `Bearer ${token}` } })
+      .get(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => {
         setRole(res.data.role);
         setCurrentUsername(res.data.username);

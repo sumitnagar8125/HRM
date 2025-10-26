@@ -26,7 +26,7 @@ export default function Newleave() {
   useEffect(() => {
     if (!token) return;
     setLoading(true);
-    fetch("http://127.0.0.1:8000/leave-balance/me", {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/leave-balance/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => (res.ok ? res.json() : Promise.reject()))
@@ -74,7 +74,7 @@ export default function Newleave() {
     setInfo("");
     try {
       const payload = { ...formData };
-      const res = await fetch("http://127.0.0.1:8000/leaves/", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/leaves/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -87,7 +87,7 @@ export default function Newleave() {
         setFormData({ start_date: "", end_date: "", leave_type: "", reason: "" });
         setRequestedDays(0);
         // Refresh coins after request
-        fetch("http://127.0.0.1:8000/leave-balance/me", {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/leave-balance/me`, {
           headers: { Authorization: `Bearer ${token}` },
         })
           .then((r) => (r.ok ? r.json() : {}))

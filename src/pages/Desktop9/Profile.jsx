@@ -110,7 +110,7 @@ export default function Profile({
       return;
     }
     try {
-      const res = await fetch(`http://127.0.0.1:8000/employees/me/avatar`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/employees/me/avatar`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -150,7 +150,7 @@ export default function Profile({
       return;
     }
     try {
-      const res = await fetch("http://127.0.0.1:8000/employees/", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/employees/`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
@@ -193,10 +193,10 @@ export default function Profile({
     let updateEndpoint = "";
 
     if (isSelfEdit) {
-      updateEndpoint = `http://127.0.0.1:8000/employees/me/update-profile`;
+      updateEndpoint =`${process.env.NEXT_PUBLIC_API_URL}/employees/me/update-profile`;
       updateData = { name: form.name, phone: form.phone };
     } else {
-      updateEndpoint = `http://127.0.0.1:8000/employees/${editingEmployee.id}`;
+      updateEndpoint = `${process.env.NEXT_PUBLIC_API_URL}/employees/${editingEmployee.id}`;
       updateData = { name: form.name };
     }
 
@@ -285,7 +285,7 @@ export default function Profile({
         avatar_url: newEmployee.avatar_url,
         emp_code: newEmployee.emp_code,
       };
-      const res = await fetch("http://127.0.0.1:8000/admin/create-user-employee", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/create-user-employee`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

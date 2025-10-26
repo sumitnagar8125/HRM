@@ -16,7 +16,7 @@ export default function RightPanel() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
-    fetch("http://127.0.0.1:8000/users/me", {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(res => {
@@ -40,7 +40,7 @@ export default function RightPanel() {
       body.append("username", email.trim());
       body.append("password", password.trim());
 
-      const response = await fetch("http://127.0.0.1:8000/token", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/token`, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: body.toString(),
@@ -55,7 +55,7 @@ export default function RightPanel() {
       const data = await response.json();
       localStorage.setItem("token", data.access_token);
 
-      const userResponse = await fetch("http://127.0.0.1:8000/users/me", {
+      const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, {
         headers: { Authorization: `Bearer ${data.access_token}` },
       });
 

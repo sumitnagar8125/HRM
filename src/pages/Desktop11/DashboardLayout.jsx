@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import Notification from "./Notification";
 import Header from "./Header";
 import LoadingSpinner from "@/src/components/ui/LoadingSpinner";
-const BACKEND_URL = "http://127.0.0.1:8000";
+//const BACKEND_URL = "http://127.0.0.1:8000";
 
 const DashboardLayout = () => {
   const [role, setRole] = useState("");
@@ -14,14 +14,14 @@ const DashboardLayout = () => {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    fetch(`${BACKEND_URL}/users/me`, {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => (res.ok ? res.json() : Promise.reject()))
       .then((user) => {
         setRole(user.role || "employee");
         setUserId(user.employee_id || null);
-        return fetch(`${BACKEND_URL}/leaves/`, { headers: { Authorization: `Bearer ${token}` } });
+        return fetch(`${process.env.NEXT_PUBLIC_API_URL}/leaves/`, { headers: { Authorization: `Bearer ${token}` } });
       })
       .then((res) => (res.ok ? res.json() : Promise.reject()))
       .then((data) => setLeaves(data))

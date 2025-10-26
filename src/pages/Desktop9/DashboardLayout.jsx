@@ -18,12 +18,12 @@ export default function DashboardLayout() {
     }
     
     const fetchProfiles = () => {
-        axios.get("http://127.0.0.1:8000/users/me", {
+        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         })
           .then(userRes => {
             setUser(userRes.data);
-            return axios.get("http://127.0.0.1:8000/employees/me", {
+            return axios.get(`${process.env.NEXT_PUBLIC_API_URL}/employees/me`, {
               headers: { Authorization: `Bearer ${accessToken}` },
             });
           })

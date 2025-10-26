@@ -9,7 +9,7 @@ function DashboardLayout() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     axios
-      .get("http://127.0.0.1:8000/attendance-rt/admin/all-employees-status", {
+      .get(`${process.env.NEXT_PUBLIC_API_URL}/attendance-rt/admin/all-employees-status`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       })
       .then(({ data }) => {

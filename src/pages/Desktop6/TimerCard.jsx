@@ -52,7 +52,7 @@ function TimerCard({ onClockAction }) {
       stopTimer();
 
       try {
-        const res = await fetch("http://127.0.0.1:8000/attendance-rt/active", {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/attendance-rt/active`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
@@ -109,7 +109,7 @@ function TimerCard({ onClockAction }) {
   // POST helper (unchanged)
   const postAttendanceRT = async (endpoint) => {
     try {
-      const res = await fetch(`http://127.0.0.1:8000/attendance-rt/${endpoint}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/attendance-rt/${endpoint}`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` }
       });

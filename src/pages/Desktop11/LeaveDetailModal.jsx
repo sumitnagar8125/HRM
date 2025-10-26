@@ -10,7 +10,7 @@ export default function LeaveDetailModal({ leaveId, role, onClose, refresh }) {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    fetch(`http://127.0.0.1:8000/leaves/${leaveId}`, {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/leaves/${leaveId}`, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(res => (res.ok ? res.json() : Promise.reject()))
@@ -20,7 +20,7 @@ export default function LeaveDetailModal({ leaveId, role, onClose, refresh }) {
 
   const apiCall = (path) => {
     const token = localStorage.getItem("token");
-    return fetch(`http://127.0.0.1:8000/leaves/${leaveId}${path}`, {
+    return fetch(`${process.env.NEXT_PUBLIC_API_URL}/leaves/${leaveId}${path}`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` }
     })

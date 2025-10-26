@@ -19,7 +19,7 @@ const menuItems = [
 const statusMenuItem = { name: "Status", icon: CheckCircle, path: "/status" };
 
 
-const BACKEND_URL = "http://127.0.0.1:8000";
+//const BACKEND_URL = "http://127.0.0.1:8000";
 
 export default function Sidebar() {
   const [role, setRole] = useState("");
@@ -55,12 +55,12 @@ export default function Sidebar() {
 
     async function fetchSidebarData() {
       try {
-        const userRes = await axios.get(`${BACKEND_URL}/users/me`, { headers: getAuthHeaders() });
+        const userRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, { headers: getAuthHeaders() });
         const userRole = userRes.data.role;
         setRole(userRole);
         const isManager = userRole === "admin" || userRole === "super_admin";
         if (!isManager) {
-          const unreadRes = await axios.get(`${BACKEND_URL}/posts/unread/count`, { headers: getAuthHeaders() });
+          const unreadRes = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/posts/unread/count`, { headers: getAuthHeaders() });
           setUnreadPostsCount(unreadRes.data.unread_count || 0);
         } else {
           setUnreadPostsCount(0);

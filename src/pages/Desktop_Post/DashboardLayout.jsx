@@ -3,7 +3,7 @@ import PostCard from "./PostCard";
 import PostDetailModal from "./PostDetailModal";
 import CreatePostModal from "./CreatePostModal";
 // import LoadingSpinner from "../../components/ui/LoadingSpinner"; 
-const BACKEND_URL = "http://127.0.0.1:8000";
+//const BACKEND_URL = "http://127.0.0.1:8000";
 
 export default function DashboardLayout({ user }) {
   const [role, setRole] = useState(user.role);
@@ -22,13 +22,13 @@ export default function DashboardLayout({ user }) {
   async function fetchData() {
     setLoading(true);
     try {
-      let userRes = await fetch(`${BACKEND_URL}/users/me`, { headers: getAuthHeaders() });
+      let userRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, { headers: getAuthHeaders() });
       let user = await userRes.json();
       setRole(user.role);
 
       const isManager = user.role === "admin" || user.role === "super_admin";
-      const postsUrl = isManager ? `${BACKEND_URL}/admin/posts` : `${BACKEND_URL}/posts`;
-      const unreadUrl = `${BACKEND_URL}/posts/unread/count`;
+      const postsUrl = isManager ? `${process.env.NEXT_PUBLIC_API_URL}/admin/posts` : `${process.env.NEXT_PUBLIC_API_URL}/posts`;
+      const unreadUrl = `${process.env.NEXT_PUBLIC_API_URL}/posts/unread/count`;
 
       let [postsRes, unreadRes] = await Promise.all([
         fetch(postsUrl, { headers: getAuthHeaders() }),
@@ -54,7 +54,7 @@ export default function DashboardLayout({ user }) {
 
   async function createPost(title, content, is_pinned) {
     setActionLoading((prev) => ({ ...prev, create: true }));
-    await fetch(`${BACKEND_URL}/admin/posts/`, {
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/posts/`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...getAuthHeaders() },
       body: JSON.stringify({ title, content, is_pinned }),
@@ -66,7 +66,7 @@ export default function DashboardLayout({ user }) {
 
   async function deletePost(postId) {
     setActionLoading((prev) => ({ ...prev, [postId]: true }));
-    await fetch(`${BACKEND_URL}/admin/posts/${postId}`, {
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/posts/${postId}`, {
       method: "DELETE",
       headers: getAuthHeaders(),
     });
@@ -76,7 +76,7 @@ export default function DashboardLayout({ user }) {
 
   async function togglePin(postId) {
     setActionLoading((prev) => ({ ...prev, [postId]: true }));
-    await fetch(`${BACKEND_URL}/admin/posts/${postId}/toggle-pin`, {
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/posts/${postId}/toggle-pin`, {
       method: "POST",
       headers: getAuthHeaders(),
     });
@@ -86,7 +86,7 @@ export default function DashboardLayout({ user }) {
 
   async function toggleReaction(postId, emoji) {
     setActionLoading((prev) => ({ ...prev, [postId]: true }));
-    await fetch(`${BACKEND_URL}/posts/${postId}/react`, {
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posts/${postId}/react`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...getAuthHeaders() },
       body: JSON.stringify({ emoji }),
@@ -97,7 +97,7 @@ export default function DashboardLayout({ user }) {
 
   async function markViewed(postId) {
     if (!isAdminOrSuperAdmin) {
-      await fetch(`${BACKEND_URL}/posts/${postId}/view`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posts/${postId}/view`, {
         method: "POST",
         headers: getAuthHeaders(),
       });
