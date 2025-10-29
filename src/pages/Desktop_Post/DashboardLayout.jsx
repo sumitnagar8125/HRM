@@ -1,12 +1,13 @@
+"use client";
+
 import React, { useEffect, useState } from "react";
 import PostCard from "./PostCard";
 import PostDetailModal from "./PostDetailModal";
 import CreatePostModal from "./CreatePostModal";
-// import LoadingSpinner from "../../components/ui/LoadingSpinner"; 
-//const BACKEND_URL = "http://127.0.0.1:8000";
+import LoadingSpinner from "../../components/ui/LoadingSpinner";
 
-export default function DashboardLayout({ user }) {
-  const [role, setRole] = useState(user.role);
+export default function DashboardLayout({ user = {} }) {
+  const [role, setRole] = useState(user?.role || "");
   const [posts, setPosts] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [selectedPostId, setSelectedPostId] = useState(null);
@@ -22,26 +23,40 @@ export default function DashboardLayout({ user }) {
   async function fetchData() {
     setLoading(true);
     try {
-      let userRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, { headers: getAuthHeaders() });
-      let user = await userRes.json();
-      setRole(user.role);
+      let userRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, {
+        headers: getAuthHeaders(),
+      });
+      let userData = await userRes.json();
 
-      const isManager = user.role === "admin" || user.role === "super_admin";
-      const postsUrl = isManager ? `${process.env.NEXT_PUBLIC_API_URL}/admin/posts` : `${process.env.NEXT_PUBLIC_API_URL}/posts`;
+      // Safely handle role assignment
+      setRole(userData?.role || "");
+
+      const isManager =
+        userData?.role === "admin" || userData?.role === "super_admin";
+
+      const postsUrl = isManager
+        ? `${process.env.NEXT_PUBLIC_API_URL}/admin/posts`
+        : `${process.env.NEXT_PUBLIC_API_URL}/posts`;
       const unreadUrl = `${process.env.NEXT_PUBLIC_API_URL}/posts/unread/count`;
 
       let [postsRes, unreadRes] = await Promise.all([
         fetch(postsUrl, { headers: getAuthHeaders() }),
-        !isManager ? fetch(unreadUrl, { headers: getAuthHeaders() }) : Promise.resolve({ json: async () => ({ unread_count: 0 }) }),
+        !isManager
+          ? fetch(unreadUrl, { headers: getAuthHeaders() })
+          : Promise.resolve({
+              json: async () => ({ unread_count: 0 }),
+            }),
       ]);
 
       let postsData = await postsRes.json();
       let unreadData = await unreadRes.json();
-      const newUnreadCount = unreadData.unread_count ?? 0;
 
-      setPosts(postsData);
+      const newUnreadCount = unreadData?.unread_count ?? 0;
+
+      setPosts(Array.isArray(postsData) ? postsData : []);
       setUnreadCount(newUnreadCount);
     } catch (error) {
+      console.error("Fetch Error:", error);
       setPosts([]);
       setUnreadCount(0);
     }
@@ -76,10 +91,13 @@ export default function DashboardLayout({ user }) {
 
   async function togglePin(postId) {
     setActionLoading((prev) => ({ ...prev, [postId]: true }));
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/posts/${postId}/toggle-pin`, {
-      method: "POST",
-      headers: getAuthHeaders(),
-    });
+    await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/admin/posts/${postId}/toggle-pin`,
+      {
+        method: "POST",
+        headers: getAuthHeaders(),
+      }
+    );
     setActionLoading((prev) => ({ ...prev, [postId]: false }));
     await fetchData();
   }
@@ -102,27 +120,34 @@ export default function DashboardLayout({ user }) {
         headers: getAuthHeaders(),
       });
 
-      setUnreadCount(prev => Math.max(0, prev - 1));
+      setUnreadCount((prev) => Math.max(0, prev - 1));
 
-      setPosts(prevPosts =>
-        prevPosts.map(post =>
-          post.id === postId
-            ? { ...post, is_viewed: true }
-            : post
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post.id === postId ? { ...post, is_viewed: true } : post
         )
       );
     }
   }
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto p-8 bg-white rounded-lg shadow-xl mt-8 mb-8">
       <header className="flex justify-between items-center mb-6 border-b-0 pb-0 border-gray-200">
-        {/* (Dashboard heading removed here) */}
         <div />
         {!isAdminOrSuperAdmin && (
           <div className="inline-flex items-center space-x-2 ml-auto mr-2 -mt-3 mb-2">
             <span className="text-gray-700 font-semibold">Unread</span>
-            <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-semibold">{unreadCount}</span>
+            <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-semibold">
+              {unreadCount}
+            </span>
           </div>
         )}
         {isAdminOrSuperAdmin && (
@@ -137,16 +162,18 @@ export default function DashboardLayout({ user }) {
       </header>
 
       {selectedPostId === "create" && isAdminOrSuperAdmin && (
-        <CreatePostModal onClose={() => setSelectedPostId(null)} onCreate={createPost} loading={actionLoading.create} />
+        <CreatePostModal
+          onClose={() => setSelectedPostId(null)}
+          onCreate={createPost}
+          loading={actionLoading.create}
+        />
       )}
 
       <main>
-        {loading ? (
-          <div>
-            <p className="text-center text-blue-500 my-20 text-lg">Loading posts...</p>
-          </div>
-        ) : posts.length === 0 ? (
-          <p className="text-center text-gray-500 my-20 text-lg">No posts available</p>
+        {posts.length === 0 ? (
+          <p className="text-center text-gray-500 my-20 text-lg">
+            No posts available
+          </p>
         ) : (
           <div className="space-y-4">
             {posts.map((post) => (
@@ -160,7 +187,6 @@ export default function DashboardLayout({ user }) {
                 onToggleReaction={toggleReaction}
                 actionLoading={actionLoading[post.id]}
                 onClick={() => setSelectedPostId(post.id)}
-                /* Ensure in PostCard: use the color theme for unpinned (is_pinned === false) */
               />
             ))}
           </div>
