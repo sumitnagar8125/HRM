@@ -1,15 +1,16 @@
+// Desktop4.jsx
 "use client";
 import { useState } from "react";
 import LeftPanel from "./left";
 import RightPanel from "./right";
 
 export default function Desktop4() {
-  const [selectedRole, setSelectedRole] = useState("employee"); // Default role
+  const [selectedRole, setSelectedRole] = useState("employee");
 
   return (
-    <div className="min-h-screen flex relative overflow-hidden">
+    <div className="min-h-screen flex flex-col lg:flex-row relative overflow-hidden">
       {/* Left Panel */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative min-h-[320px]">
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: "url('/bg.jpg')" }}
@@ -20,7 +21,7 @@ export default function Desktop4() {
       </div>
 
       {/* Right Panel */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative min-h-[320px]">
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: "url('/bg.jpg')" }}

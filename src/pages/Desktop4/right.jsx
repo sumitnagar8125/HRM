@@ -1,18 +1,16 @@
+// RightPanel.jsx
 "use client";
-import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
+import Button from "../../components/ui/Button";
 import Divider from "../../components/ui/Divider";
-import SocialButton from "../../components/ui/SocialButton";
 
 export default function RightPanel() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
 
-  // Automatically redirect if valid token exists
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -21,13 +19,12 @@ export default function RightPanel() {
     })
       .then(res => {
         if (res.ok) {
-          window.location.href = "/home"; // or router.push("/home");
+          window.location.href = "/home";
         }
       })
       .catch(() => {});
   }, []);
 
-  // Handle Login
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!email.trim() || !password.trim()) {
@@ -73,17 +70,16 @@ export default function RightPanel() {
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center p-8">
-      <div className="w-full max-w-md bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl">
+    <div className="flex-1 flex items-center justify-center p-4 sm:p-8">
+      <div className="w-full max-w-md bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-8 shadow-xl">
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-blue-600 mb-2">
+          <h2 className="text-2xl sm:text-3xl font-bold text-blue-600 mb-2">
             Welcome Back! 👋
           </h2>
           <p className="text-gray-600 text-sm leading-relaxed">
             Today is a new day, it's your day. Sign in to start managing your projects.
           </p>
         </div>
-
         <form onSubmit={handleLogin} className="space-y-6">
           <Input
             type="text"
@@ -107,22 +103,7 @@ export default function RightPanel() {
             Login
           </Button>
         </form>
-
         <Divider />
-
-        <div className="space-y-3">
-          <SocialButton
-            icon={<Image src="/micro.png" alt="Microsoft" width={20} height={15} />}
-            text="Continue with Microsoft"
-            onClick={() => alert("Microsoft login not implemented yet")}
-          />
-          <SocialButton
-            icon={<Image src="/google.png" alt="Google" width={20} height={15} />}
-            text="Continue with Google"
-            onClick={() => alert("Google login not implemented yet")}
-          />
-        </div>
-
         <p className="text-center text-sm text-gray-600 mt-6">
           Don't have an account? Contact your admin to create one.
         </p>
