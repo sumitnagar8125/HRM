@@ -1,11 +1,10 @@
-// Header.jsx
 "use client";
 import React from "react";
 
 export default function Header() {
   return (
     <header
-      className="flex items-center justify-center px-2 sm:px-4 py-3 border border-blue-400 rounded-md shadow-sm w-full relative"
+      className="flex justify-between items-center px-2 sm:px-4 py-3 border border-blue-400 rounded-md shadow-sm w-full relative"
       style={{
         backgroundImage: "url('/Hbg.jpg')",
         backgroundSize: "cover",
@@ -15,7 +14,7 @@ export default function Header() {
         minHeight: "60px",
       }}
     >
-      <h1 className="text-base sm:text-lg md:text-xl text-blue-700 font-semibold text-center w-full relative z-10">
+      <h1 className="text-base sm:text-lg md:text-xl text-blue-700 font-semibold relative z-10">
         Company Details
       </h1>
     </header>
