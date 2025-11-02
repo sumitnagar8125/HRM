@@ -22,7 +22,7 @@ export default function Header() {
       }}
     >
       <h1 className="text-blue-700 font-semibold text-base sm:text-lg md:text-xl text-center mb-1 relative z-10">
-        Post
+        Company Details
       </h1>
       <span className="text-sm text-gray-700 relative z-10 text-center">{formattedDate}</span>
     </header>
