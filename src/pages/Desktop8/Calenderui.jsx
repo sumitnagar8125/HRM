@@ -18,7 +18,6 @@ export default function Calenderui({
   role,
   maxPastDays = 14,
 }) {
-  // 🧠 Use today's date if selectedDate is invalid
   const safeDate = selectedDate instanceof Date && !isNaN(selectedDate)
     ? selectedDate
     : new Date();
@@ -47,7 +46,7 @@ export default function Calenderui({
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-2">
         <button
           onClick={() => canGoBack && setWeekStart(subWeeks(weekStart, 1))}
           className={`text-xl font-bold ${
@@ -59,9 +58,7 @@ export default function Calenderui({
         >
           &lt;
         </button>
-
         <div className="text-center">
-          {/* 🛡️ Safe fallback for invalid or missing date */}
           <h2 className="font-semibold text-lg">
             {safeDate
               ? format(safeDate, "EEEE, MMMM d, yyyy")
@@ -71,7 +68,6 @@ export default function Calenderui({
             Week {format(weekStart, "I")} of {format(weekStart, "yyyy")}
           </p>
         </div>
-
         <button
           onClick={() => canGoForward && setWeekStart(addWeeks(weekStart, 1))}
           className={`text-xl font-bold ${
@@ -84,8 +80,7 @@ export default function Calenderui({
           &gt;
         </button>
       </div>
-
-      <div className="flex justify-center gap-6">
+      <div className="flex flex-wrap justify-center gap-2 sm:gap-6">
         {days.map((day, idx) => {
           const isActive = isSameDay(day, safeDate);
           const disabled = isDisabled(day);

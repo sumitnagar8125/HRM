@@ -202,26 +202,31 @@ function TimerCard({ onClockAction }) {
   const workSeconds = time;
 
   return (
-    <div className="grid grid-cols-2 gap-3">
-      <div className="flex flex-col items-center">
-        <div className="w-40 h-40 flex items-center justify-center rounded-full border-8 border-gray-200">
-          <span
-            className={`text-2xl font-bold ${
-              isOnBreak ? "text-yellow-600" : "text-red-600"
-            }`}
-          >
-            {formatTime(workSeconds)}
-          </span>
-        </div>
+    <div className="flex flex-col md:flex-row gap-4 w-full">
+      <div className="flex flex-col items-center w-full md:w-1/2">
+        <div className="w-32 h-32 sm:w-40 sm:h-40 flex items-center justify-center rounded-full border-8 border-gray-200">
+  <span
+    className={`
+      font-bold
+      text-lg    // Small screens: less bold, smaller
+      sm:text-3xl sm:font-extrabold // Desktop: bigger and bolder
+      ${isOnBreak ? "text-yellow-600" : "text-red-600"}
+      select-none
+    `}
+  >
+    {formatTime(workSeconds)}
+  </span>
+</div>
+
         <p className="mt-2 text-gray-600">
           Clocked in at {formatTimeIST(clockInTime)}
         </p>
         {isOnBreak && <p className="text-yellow-600 mt-1">On Break...</p>}
       </div>
-      <div className="grid grid-cols-2 gap-4 ml-4 mr-23 mt-4">
+      <div className="grid grid-cols-2 gap-3 w-full md:w-1/2 mt-2">
         <Button
           type="button"
-          className="bg-green-500 hover:bg-green-600 text-white px-2 py-6 rounded-lg"
+          className="bg-green-500 hover:bg-green-600 text-white px-2 py-4 rounded-lg"
           onClick={handleClockIn}
           disabled={isRunning}
         >
@@ -229,7 +234,7 @@ function TimerCard({ onClockAction }) {
         </Button>
         <Button
           type="button"
-          className="bg-gray-700 hover:bg-gray-800 text-white px-2 py-6 rounded-lg"
+          className="bg-gray-700 hover:bg-gray-800 text-white px-2 py-4 rounded-lg"
           onClick={handleClockOut}
           disabled={!isRunning}
         >
@@ -237,7 +242,7 @@ function TimerCard({ onClockAction }) {
         </Button>
         <Button
           type="button"
-          className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-6 rounded-lg"
+          className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-4 rounded-lg"
           onClick={() => {
             if (isRunning) {
               serverBaseTimeRef.current = time + 3600;
@@ -252,7 +257,7 @@ function TimerCard({ onClockAction }) {
         </Button>
         <Button
           type="button"
-          className={`px-2 py-6 rounded-lg ${
+          className={`px-2 py-4 rounded-lg ${
             isOnBreak
               ? "bg-yellow-600 hover:bg-yellow-700"
               : "bg-yellow-400 hover:bg-yellow-500"
@@ -266,5 +271,6 @@ function TimerCard({ onClockAction }) {
     </div>
   );
 }
+
 
 export default TimerCard;

@@ -1,69 +1,25 @@
+"use client";
 import React, { useState } from "react";
 
-const cardStyles = {
-  background: "#ffffff",
-  borderRadius: "10px",
-  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-  padding: "16px",
-  marginBottom: "14px",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  transition: "transform 0.2s ease-in-out",
-};
-const sectionStyles = {
-  height: "400px",
-  overflowY: "auto",
-  border: "1px solid #e0e7ff",
-  background: " #F0F8FF",
-  margin: "0 14px 0 0",
-  padding: "22px",
-  borderRadius: "16px",
-  width: "32%",
-  fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-};
-const headingStyles = {
-  marginBottom: "24px",
-  fontWeight: "700",
-  fontSize: "1.4rem",
-  color: "#1e40af",
-  borderBottom: "2px solid #3b82f6",
-  paddingBottom: "8px",
-};
 const statusTextStyles = {
-  available: { color: "#16a34a", fontWeight: "600" },
-  active: { color: "#0ea5e9", fontWeight: "600" },
-  break: { color: "#ca8a04", fontWeight: "600" },
-  onbreak: { color: "#ca8a04", fontWeight: "600" },
-  ended: { color: "#ef4444", fontWeight: "600" },
-  offline: { color: "#b91c1c", fontWeight: "600" },
-  onleave: { color: "#7c3aed", fontWeight: "600" },
-};
-const inputStyles = {
-  width: "340px",
-  padding: "12px",
-  fontSize: "1.1rem",
-  border: "1.5px solid #cbd5e1",
-  borderRadius: "8px",
-  boxShadow: "0 2px 6px #d1d5db",
-  outline: "none",
-  fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+  available: "text-green-600 font-semibold",
+  active: "text-sky-500 font-semibold",
+  break: "text-yellow-600 font-semibold",
+  onbreak: "text-yellow-600 font-semibold",
+  ended: "text-red-500 font-semibold",
+  offline: "text-red-700 font-semibold",
+  onleave: "text-purple-600 font-semibold",
 };
 
 function Status({ employees = [] }) {
   const [search, setSearch] = useState("");
-
-  // Defensive fallback to empty array
   const safeEmployees = Array.isArray(employees) ? employees : [];
-
-  // Filter on search by name or username
   const filtered = safeEmployees.filter(
     (emp) =>
       emp.name?.toLowerCase().includes(search.toLowerCase()) ||
       emp.username?.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Categorize employees for UI
   const out = filtered.filter(
     (emp) => emp.currentStatus === "ended" || emp.clockInTime === null
   );
@@ -74,85 +30,69 @@ function Status({ employees = [] }) {
 
   return (
     <div>
-      <div style={{ marginBottom: "28px" }}>
+      <div className="mb-7 flex justify-center">
         <input
           type="text"
           placeholder="Search employee by name or username..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={inputStyles}
+          className="w-full max-w-lg p-3 text-base border border-blue-200 rounded-lg shadow-sm outline-none font-semibold text-gray-800"
         />
       </div>
-      <div style={{ display: "flex", gap: "24px" }}>
+      <div className="flex flex-col lg:flex-row gap-6">
         {/* Active Section */}
-        <div style={sectionStyles}>
-          <div style={headingStyles}>Active</div>
+        <div className="flex-1 min-w-[220px] bg-blue-50 border border-blue-200 rounded-2xl p-6 h-[410px] flex flex-col">
+          <div className="text-xl font-bold text-blue-900 border-b-2 border-blue-400 pb-2 mb-5">Active</div>
           {active.length === 0 ? (
-            <div style={{ fontStyle: "italic", color: "#64748b" }}>
-              No active employees found.
-            </div>
+            <div className="italic text-slate-500">No active employees found.</div>
           ) : (
             active.map((emp) => (
               <div
                 key={emp.id}
-                style={cardStyles}
-                onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.02)")}
-                onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                className="bg-white shadow-sm rounded-lg px-4 py-2 mb-2 flex justify-between items-center hover:scale-[1.02] transition-transform"
               >
-                <div>
-                  <span style={{ fontWeight: "700", fontSize: "1.05rem" }}>{emp.name}</span>{" "}
-                  <span style={statusTextStyles[emp.currentStatus] || {}}>
-                    {`(${emp.currentStatus})`}
-                  </span>
-                </div>
+                <span className="font-bold text-base">{emp.name}</span>
+                <span className={statusTextStyles[emp.currentStatus] || ""}>
+                  ({emp.currentStatus})
+                </span>
               </div>
             ))
           )}
         </div>
-
         {/* On Break Section */}
-        <div style={sectionStyles}>
-          <div style={headingStyles}>On Break</div>
+        <div className="flex-1 min-w-[220px] bg-blue-50 border border-blue-200 rounded-2xl p-6 h-[410px] flex flex-col">
+          <div className="text-xl font-bold text-blue-900 border-b-2 border-blue-400 pb-2 mb-5">On Break</div>
           {onBreak.length === 0 ? (
-            <div style={{ fontStyle: "italic", color: "#64748b" }}>No employees on break.</div>
+            <div className="italic text-slate-500">No employees on break.</div>
           ) : (
             onBreak.map((emp) => (
               <div
                 key={emp.id}
-                style={cardStyles}
-                onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.02)")}
-                onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                className="bg-white shadow-sm rounded-lg px-4 py-2 mb-2 flex justify-between items-center hover:scale-[1.02] transition-transform"
               >
-                <div>
-                  <span style={{ fontWeight: "700", fontSize: "1.05rem" }}>{emp.name}</span>{" "}
-                  <span style={statusTextStyles[emp.currentStatus] || {}}>
-                    {`(${emp.currentStatus})`}
-                  </span>
-                </div>
+                <span className="font-bold text-base">{emp.name}</span>
+                <span className={statusTextStyles[emp.currentStatus] || ""}>
+                  ({emp.currentStatus})
+                </span>
               </div>
             ))
           )}
         </div>
-
         {/* Out Section */}
-        <div style={sectionStyles}>
-          <div style={headingStyles}>Out</div>
+        <div className="flex-1 min-w-[220px] bg-blue-50 border border-blue-200 rounded-2xl p-6 h-[410px] flex flex-col">
+          <div className="text-xl font-bold text-blue-900 border-b-2 border-blue-400 pb-2 mb-5">Out</div>
           {out.length === 0 ? (
-            <div style={{ fontStyle: "italic", color: "#64748b" }}>No employees out.</div>
+            <div className="italic text-slate-500">No employees out.</div>
           ) : (
             out.map((emp) => (
               <div
                 key={emp.id}
-                style={cardStyles}
-                onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.02)")}
-                onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                className="bg-white shadow-sm rounded-lg px-4 py-2 mb-2 flex justify-between items-center hover:scale-[1.02] transition-transform"
               >
-                <div>
-                  <span style={{ fontWeight: "700", fontSize: "1.05rem" }}>{emp.name}</span>{" "}
-                  <span style={statusTextStyles[emp.currentStatus] || {}}>
-                    {`(${emp.currentStatus})`}
-                  </span>
-                </div>
+                <span className="font-bold text-base">{emp.name}</span>
+                <span className={statusTextStyles[emp.currentStatus] || ""}>
+                  ({emp.currentStatus})
+                </span>
               </div>
             ))
           )}

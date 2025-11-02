@@ -1,7 +1,6 @@
 "use client";
 
 export default function TimeCards({ data = [] }) {
-  // Ensure data is always an array
   if (!Array.isArray(data) || data.length === 0) {
     return (
       <div className="text-center text-gray-500 py-8 bg-gray-50 rounded-xl shadow-sm">
@@ -17,22 +16,15 @@ export default function TimeCards({ data = [] }) {
           key={idx}
           className="bg-white shadow rounded-xl p-4 flex flex-col items-start"
         >
-          {/* icon */}
           <div className={`mb-2 ${card?.color || ""}`}>
             {card?.icon ?? "🕒"}
           </div>
-
-          {/* title */}
           <h3 className="text-lg font-semibold">
             {card?.title ?? "Untitled"}
           </h3>
-
-          {/* main value */}
           <p className="text-xl font-bold">
             {card?.value ?? "N/A"}
           </p>
-
-          {/* subtitle */}
           <p className="text-sm text-gray-500">
             {card?.subtitle ?? ""}
           </p>

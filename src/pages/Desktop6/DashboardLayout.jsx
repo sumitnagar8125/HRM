@@ -90,11 +90,13 @@ export default function DashboardLayout() {
   );
 
   return (
-    <div className="p-6 grid grid-cols-12 gap-6">
-      <div className="col-span-12 lg:col-span-16">
+    <div className="p-4 sm:p-6 flex flex-col gap-6">
+      {/* TimerCard takes full width always */}
+      <div>
         <TimerCard onClockAction={fetchAttendance} />
       </div>
-      <div className="col-span-12 lg:row-span-3 grid grid-cols-1 sm:grid-cols-3 gap-6">
+      {/* Stats summary cards: row on desktop, stack on mobile */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatsCard
           title="Tracked Hours"
           value={`${weeklyData.reduce((sum, d) => sum + d.workedHours, 0).toFixed(1)}h`}
@@ -117,19 +119,22 @@ export default function DashboardLayout() {
           iconColor="text-yellow-600"
         />
       </div>
-      <div className="col-span-12 lg:col-span-8">
-        {hasData ? (
-          <BarChart data={weeklyData} />
-        ) : (
-          <div className="text-center text-gray-500 mt-10">
-            No attendance data available for this week.
-          </div>
-        )}
-      </div>
-      <div className="col-span-12 lg:col-span-4">
-        <ActivityCard
-          workedHours={weeklyData.reduce((sum, d) => sum + d.workedHours, 0)}
-        />
+      {/* BarChart and Activity Card: side-by-side on desktop, stacked on mobile */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+        <div className="lg:col-span-2">
+          {hasData ? (
+            <BarChart data={weeklyData} />
+          ) : (
+            <div className="text-center text-gray-500 mt-10">
+              No attendance data available for this week.
+            </div>
+          )}
+        </div>
+        <div>
+          <ActivityCard
+            workedHours={weeklyData.reduce((sum, d) => sum + d.workedHours, 0)}
+          />
+        </div>
       </div>
     </div>
   );

@@ -17,7 +17,7 @@ export default function Header() {
         minHeight: "60px",
       }}
     >
-      <h1 className="text-blue-700 font-semibold relative z-10">Leave Management</h1>
+      <h1 className="text-blue-700 font-semibold relative z-10"></h1> 
 
       <Link
         href="/newleave"
